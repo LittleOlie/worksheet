@@ -24,27 +24,27 @@
             cursor: crosshair;
         }
         
-        /* A4 Page Styling */
+        /* A4 Page Styling - More compact */
         .page {
             background: white;
             display: block;
-            margin: 2rem auto;
+            margin: 1rem auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             width: 210mm;
-            min-height: 297mm;
-            padding: 1.5cm;
+            height: 296mm; /* Use fixed height for single page goal */
+            padding: 1cm; /* Reduced padding */
         }
 
         .section-header {
             background-color: #f3f4f6;
-            padding: 0.5rem 1rem;
+            padding: 0.25rem 0.75rem; /* Reduced padding */
             border-radius: 0.5rem;
-            border-left: 4px solid #3b82f6;
-            margin-bottom: 1rem;
+            border-left: 3px solid #3b82f6;
+            margin-bottom: 0.5rem; /* Reduced margin */
         }
 
         .section-header h2 {
-            font-size: 1rem;
+            font-size: 0.9rem; /* Reduced font size */
             font-weight: 600;
             color: #1f2937;
         }
@@ -52,6 +52,7 @@
         input, select, textarea {
             border-color: #d1d5db;
             transition: all 0.2s ease-in-out;
+            font-size: 0.75rem; /* Smaller font for inputs */
         }
         
         input:focus, select:focus, textarea:focus {
@@ -65,18 +66,21 @@
             cursor: not-allowed;
         }
 
+        label {
+            font-size: 0.7rem; /* Smaller labels */
+        }
+
         /* Print-specific styles */
         @media print {
             body, .page {
                 margin: 0;
                 box-shadow: none;
                 background: white;
+                width: 100%;
+                height: 100%;
             }
             #controls, #submit-button {
                 display: none !important;
-            }
-            .page {
-                padding: 1cm;
             }
             .no-print-border {
                 border: none !important;
@@ -90,61 +94,61 @@
 
     <div class="page">
         <!-- Header -->
-        <div class="flex justify-between items-center border-b-2 border-gray-100 pb-4 mb-6">
+        <div class="flex justify-between items-center border-b-2 border-gray-100 pb-2 mb-3">
             <div>
-                 <h1 class="text-3xl font-bold text-gray-800">Job Sheet</h1>
-                 <p class="text-gray-500 mt-1 text-sm" id="job-subtitle">(TOW PRO INSTALLATION)</p>
+                 <h1 class="text-2xl font-bold text-gray-800">Job Sheet</h1>
+                 <p class="text-gray-500 text-xs" id="job-subtitle">(TOW PRO INSTALLATION)</p>
             </div>
             <div class="text-right">
                 <!-- Replace with your logo URL -->
-                <img src="https://placehold.co/150x50/3b82f6/ffffff?text=Your+Logo" alt="Company Logo" class="h-12">
+                <img src="https://placehold.co/120x40/3b82f6/ffffff?text=Your+Logo" alt="Company Logo" class="h-10">
             </div>
         </div>
 
         <!-- Form Section -->
-        <form id="worksheet-form" class="space-y-5">
+        <form id="worksheet-form" class="space-y-2">
             <!-- Top Details Grid -->
-            <div id="job-details-section" class="p-4 border rounded-lg">
-                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div id="job-details-section" class="p-3 border rounded-lg">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2">
                     <div>
-                        <label for="jobOrderNumber" class="block text-xs font-medium text-gray-600">Job order number</label>
-                        <input type="text" id="jobOrderNumber" readonly required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="jobOrderNumber" class="block font-medium text-gray-600">Job order number</label>
+                        <input type="text" id="jobOrderNumber" readonly required class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="clientName" class="block text-xs font-medium text-gray-600">Boat name / Client name</label>
-                        <input type="text" id="clientName" readonly required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="clientName" class="block font-medium text-gray-600">Boat name / Client name</label>
+                        <input type="text" id="clientName" readonly required class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="contactName" class="block text-xs font-medium text-gray-600">Contact</label>
-                        <input type="text" id="contactName" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="contactName" class="block font-medium text-gray-600">Contact</label>
+                        <input type="text" id="contactName" readonly class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                     <div>
-                        <label for="phone" class="block text-xs font-medium text-gray-600">Phone</label>
-                        <input type="tel" id="phone" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="phone" class="block font-medium text-gray-600">Phone</label>
+                        <input type="tel" id="phone" readonly class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                      <div>
-                        <label for="portOfCall" class="block text-xs font-medium text-gray-600">Port of call / Place of work</label>
-                        <input type="text" id="portOfCall" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="portOfCall" class="block font-medium text-gray-600">Port of call / Place of work</label>
+                        <input type="text" id="portOfCall" readonly class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                      <div>
-                        <label for="jobStatus" class="block text-xs font-medium text-gray-600">Job status</label>
-                        <input type="text" id="jobStatus" value="To be carried out" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="jobStatus" class="block font-medium text-gray-600">Job status</label>
+                        <input type="text" id="jobStatus" value="To be carried out" readonly class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                 </div>
             </div>
 
             <!-- Work To Do Table -->
-            <div class="p-4 border rounded-lg">
+            <div class="p-3 border rounded-lg">
                  <div class="section-header"><h2>Work To Do</h2></div>
-                 <textarea id="work-description" rows="2" readonly class="text-sm text-gray-700 mb-3 w-full border rounded-md p-2"></textarea>
+                 <textarea id="work-description" rows="1" readonly class="text-gray-700 mb-2 w-full border rounded-md p-2"></textarea>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="min-w-full">
                       <thead class="bg-gray-50">
                         <tr>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Equipment make/model</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Serial number</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Work to do</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Complete</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Equipment make/model</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Serial number</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Work to do</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Complete</th>
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200" id="work-table-body">
@@ -155,33 +159,33 @@
             </div>
 
             <!-- Work Done & Comments -->
-             <div class="p-4 border rounded-lg">
+             <div class="p-3 border rounded-lg">
                 <div class="section-header"><h2>Completion Details</h2></div>
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="workDone" class="block text-xs font-medium text-gray-600">Work done</label>
-                        <textarea id="workDone" rows="3" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm"></textarea>
+                        <label for="workDone" class="block font-medium text-gray-600">Work done</label>
+                        <textarea id="workDone" rows="2" class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm"></textarea>
                     </div>
                     <div>
-                        <label for="techComments" class="block text-xs font-medium text-gray-600">Technicians comments</label>
-                        <textarea id="techComments" rows="3" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm"></textarea>
+                        <label for="techComments" class="block font-medium text-gray-600">Technicians comments</label>
+                        <textarea id="techComments" rows="2" class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm"></textarea>
                     </div>
                 </div>
             </div>
             
              <!-- Technician Log Table -->
-            <div class="p-4 border rounded-lg">
+            <div class="p-3 border rounded-lg">
                 <div class="section-header"><h2>Technician Log</h2></div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="min-w-full">
                       <thead class="bg-gray-50">
                         <tr>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Date attended</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Name</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Start time</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Finish time</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Break time</th>
-                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Notes</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Date</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Name</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Start</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Finish</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Break</th>
+                          <th scope="col" class="px-2 py-1 text-left text-xs font-semibold text-gray-600">Notes</th>
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200" id="tech-log-body">
@@ -192,68 +196,68 @@
             </div>
 
             <!-- For office use only -->
-            <div class="p-4 border rounded-lg">
+            <div class="p-3 border rounded-lg">
                 <div class="section-header"><h2>For Office Use Only</h2></div>
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-3 gap-4 items-center">
                     <div class="flex items-center space-x-2">
-                        <label for="workCompleted" class="block text-xs font-medium text-gray-600">Work completed</label>
-                        <select id="workCompleted" class="block w-full border rounded-md shadow-sm text-sm py-1.5">
+                        <label for="workCompleted" class="block font-medium text-gray-600 whitespace-nowrap">Work completed</label>
+                        <select id="workCompleted" class="block w-full border rounded-md shadow-sm py-1">
                             <option>No</option>
                             <option>Yes</option>
                         </select>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <label for="additionalParts" class="block text-xs font-medium text-gray-600">Additional parts</label>
-                        <select id="additionalParts" class="block w-full border rounded-md shadow-sm text-sm py-1.5">
+                        <label for="additionalParts" class="block font-medium text-gray-600 whitespace-nowrap">Add. parts</label>
+                        <select id="additionalParts" class="block w-full border rounded-md shadow-sm py-1">
                             <option>No</option>
                             <option>Yes</option>
                         </select>
                     </div>
                     <div>
-                        <label for="nextPort" class="block text-xs font-medium text-gray-600">Next port of call</label>
-                        <input type="text" id="nextPort" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        <label for="nextPort" class="block font-medium text-gray-600">Next port of call</label>
+                        <input type="text" id="nextPort" class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                     </div>
                 </div>
             </div>
 
             <!-- Sign-off Section -->
-            <div class="pt-4">
-                 <p class="text-xs text-gray-500 mb-4 text-center italic">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below.</p>
-                <div class="grid grid-cols-2 gap-8 border-t pt-4">
+            <div class="pt-2">
+                 <p class="text-gray-500 mb-2 text-center" style="font-size: 0.65rem;">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below.</p>
+                <div class="grid grid-cols-2 gap-x-6 border-t pt-2">
                     <!-- Left side: AGC Marine -->
-                    <div class="space-y-4">
-                        <h3 class="font-semibold text-gray-800 text-base">For and on behalf of AGC Marine Solutions</h3>
+                    <div class="space-y-2">
+                        <h3 class="font-semibold text-gray-800 text-sm">For and on behalf of AGC Marine Solutions</h3>
                         <div>
-                            <label for="agcName" class="block text-xs font-medium text-gray-600">Name (In capital letters)</label>
-                            <input type="text" id="agcName" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                            <label for="agcName" class="block font-medium text-gray-600">Name (In capital letters)</label>
+                            <input type="text" id="agcName" class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="agcPosition" class="block text-xs font-medium text-gray-600">Position</label>
-                            <input type="text" id="agcPosition" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                            <label for="agcPosition" class="block font-medium text-gray-600">Position</label>
+                            <input type="text" id="agcPosition" class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                         </div>
                     </div>
                     <!-- Right side: Owner -->
-                    <div class="space-y-4">
-                        <h3 class="font-semibold text-gray-800 text-base">For and on behalf of the owner</h3>
+                    <div class="space-y-2">
+                        <h3 class="font-semibold text-gray-800 text-sm">For and on behalf of the owner</h3>
                          <div>
-                            <label for="ownerName" class="block text-xs font-medium text-gray-600">Name (In capital letters)</label>
-                            <input type="text" id="ownerName" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                            <label for="ownerName" class="block font-medium text-gray-600">Name (In capital letters)</label>
+                            <input type="text" id="ownerName" required class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="ownerPosition" class="block text-xs font-medium text-gray-600">Position</label>
-                            <input type="text" id="ownerPosition" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                            <label for="ownerPosition" class="block font-medium text-gray-600">Position</label>
+                            <input type="text" id="ownerPosition" required class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                         </div>
                          <div>
-                            <label for="ownerDate" class="block text-xs font-medium text-gray-600">Date</label>
-                            <input type="date" id="ownerDate" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                            <label for="ownerDate" class="block font-medium text-gray-600">Date</label>
+                            <input type="date" id="ownerDate" required class="mt-1 block w-full px-2 py-1 bg-white border rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Signature</label>
+                            <label class="block font-medium text-gray-600">Signature</label>
                             <div class="mt-1 relative">
-                                <canvas id="signature-pad" class="signature-pad-canvas w-full h-28"></canvas>
+                                <canvas id="signature-pad" class="signature-pad-canvas w-full h-20"></canvas>
                             </div>
                             <p id="signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
-                            <div class="flex items-center justify-end mt-2">
+                            <div class="flex items-center justify-end">
                                 <button type="button" id="clear-signature" class="text-xs text-gray-600 hover:text-blue-600">Clear</button>
                             </div>
                         </div>
@@ -262,11 +266,11 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="pt-6" id="controls">
-                <button type="button" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+            <div class="pt-3" id="controls">
+                <button type="button" id="submit-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Submit & Finalize Job Sheet
                 </button>
-                 <button type="button" id="print-button" class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-3 hidden">
+                 <button type="button" id="print-button" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-2 hidden">
                     Print / Save as PDF
                 </button>
             </div>
@@ -313,39 +317,32 @@
 
 
             // --- Populate Work Table ---
-            const workItems = [
-                { equipment: '', serial: '', work: '' },
-                { equipment: '', serial: '', work: '' },
-                { equipment: '', serial: '', work: '' },
-                { equipment: '', serial: '', work: '' },
-            ];
-
-            workItems.forEach((item) => {
+            for (let i = 0; i < 2; i++) { // Reduced rows
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="px-3 py-1.5"><input type="text" value="${item.equipment}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-3 py-1.5"><input type="text" value="${item.serial}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-3 py-1.5"><input type="text" value="${item.work}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-3 py-1.5">
-                        <select class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-2 py-1">
+                        <select class="w-full border-gray-300 rounded-md shadow-sm">
                             <option>No</option>
                             <option>Yes</option>
                         </select>
                     </td>
                 `;
                 workTableBody.appendChild(row);
-            });
+            };
             
             // --- Populate Tech Log Table ---
-            for (let i = 0; i < 3; i++) { // Create 3 empty rows
+            for (let i = 0; i < 2; i++) { // Reduced rows
                  const row = document.createElement('tr');
                  row.innerHTML = `
-                    <td class="px-2 py-1"><input type="date" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-2 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-2 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
-                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-1 py-1"><input type="date" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-1 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-1 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-1 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-1 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                    <td class="px-1 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm"></td>
                  `;
                  techLogBody.appendChild(row);
             }
@@ -393,7 +390,7 @@
                 const sigImage = document.createElement('img');
                 sigImage.src = signatureDataUrl;
                 sigImage.alt = "Owner's signature";
-                sigImage.classList.add('border', 'rounded-md', 'bg-white', 'w-full', 'h-28', 'object-contain');
+                sigImage.classList.add('border', 'rounded-md', 'bg-white', 'w-full', 'h-20', 'object-contain');
                 canvas.parentNode.replaceChild(sigImage, canvas);
 
                 // Show the print button
