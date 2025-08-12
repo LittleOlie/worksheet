@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redesigned A4 Interactive Job Sheet</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Signature Pad library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for a better look and feel */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5; /* A lighter, modern gray */
+        }
+        .signature-pad-canvas {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+        }
+        
+        /* A4 Page Styling */
+        .page {
+            background: white;
+            display: block;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 210mm;
+            min-height: 297mm;
+            padding: 1.5cm;
+        }
+
+        .section-header {
+            background-color: #f3f4f6;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        input, select, textarea {
+            border-color: #d1d5db;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            --tw-ring-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        input[readonly], textarea[readonly] {
+            background-color: #f9fafb;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body, .page {
+                margin: 0;
+                box-shadow: none;
+                background: white;
+            }
+            #controls, #submit-button {
+                display: none !important;
+            }
+            .page {
+                padding: 1cm;
+            }
+            .no-print-border {
+                border: none !important;
+                box-shadow: none !important;
+                background-color: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        <!-- Header -->
+        <div class="flex justify-between items-center border-b-2 border-gray-100 pb-4 mb-6">
+            <div>
+                 <h1 class="text-3xl font-bold text-gray-800">Job Sheet</h1>
+                 <p class="text-gray-500 mt-1 text-sm" id="job-subtitle">(TOW PRO INSTALLATION)</p>
+            </div>
+            <div class="text-right">
+                <!-- Replace with your logo URL -->
+                <img src="https://placehold.co/150x50/3b82f6/ffffff?text=Your+Logo" alt="Company Logo" class="h-12">
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <form id="worksheet-form" class="space-y-5">
+            <!-- Top Details Grid -->
+            <div id="job-details-section" class="p-4 border rounded-lg">
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <label for="jobOrderNumber" class="block text-xs font-medium text-gray-600">Job order number</label>
+                        <input type="text" id="jobOrderNumber" readonly required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label for="clientName" class="block text-xs font-medium text-gray-600">Boat name / Client name</label>
+                        <input type="text" id="clientName" readonly required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label for="contactName" class="block text-xs font-medium text-gray-600">Contact</label>
+                        <input type="text" id="contactName" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-xs font-medium text-gray-600">Phone</label>
+                        <input type="tel" id="phone" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                     <div>
+                        <label for="portOfCall" class="block text-xs font-medium text-gray-600">Port of call / Place of work</label>
+                        <input type="text" id="portOfCall" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                     <div>
+                        <label for="jobStatus" class="block text-xs font-medium text-gray-600">Job status</label>
+                        <input type="text" id="jobStatus" value="To be carried out" readonly class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Work To Do Table -->
+            <div class="p-4 border rounded-lg">
+                 <div class="section-header"><h2>Work To Do</h2></div>
+                 <textarea id="work-description" rows="2" readonly class="text-sm text-gray-700 mb-3 w-full border rounded-md p-2"></textarea>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Equipment make/model</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Serial number</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Work to do</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Complete</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200" id="work-table-body">
+                        <!-- Rows will be dynamically inserted here -->
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Work Done & Comments -->
+             <div class="p-4 border rounded-lg">
+                <div class="section-header"><h2>Completion Details</h2></div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="workDone" class="block text-xs font-medium text-gray-600">Work done</label>
+                        <textarea id="workDone" rows="3" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label for="techComments" class="block text-xs font-medium text-gray-600">Technicians comments</label>
+                        <textarea id="techComments" rows="3" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Technician Log Table -->
+            <div class="p-4 border rounded-lg">
+                <div class="section-header"><h2>Technician Log</h2></div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Date attended</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Name</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Start time</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Finish time</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Break time</th>
+                          <th scope="col" class="px-3 py-2 text-left font-semibold text-gray-600">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200" id="tech-log-body">
+                        <!-- Rows will be dynamically inserted here -->
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- For office use only -->
+            <div class="p-4 border rounded-lg">
+                <div class="section-header"><h2>For Office Use Only</h2></div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="workCompleted" class="block text-xs font-medium text-gray-600">Work completed</label>
+                        <select id="workCompleted" class="block w-full border rounded-md shadow-sm text-sm py-1.5">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label for="additionalParts" class="block text-xs font-medium text-gray-600">Additional parts</label>
+                        <select id="additionalParts" class="block w-full border rounded-md shadow-sm text-sm py-1.5">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="nextPort" class="block text-xs font-medium text-gray-600">Next port of call</label>
+                        <input type="text" id="nextPort" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign-off Section -->
+            <div class="pt-4">
+                 <p class="text-xs text-gray-500 mb-4 text-center italic">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below.</p>
+                <div class="grid grid-cols-2 gap-8 border-t pt-4">
+                    <!-- Left side: AGC Marine -->
+                    <div class="space-y-4">
+                        <h3 class="font-semibold text-gray-800 text-base">For and on behalf of AGC Marine Solutions</h3>
+                        <div>
+                            <label for="agcName" class="block text-xs font-medium text-gray-600">Name (In capital letters)</label>
+                            <input type="text" id="agcName" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        </div>
+                        <div>
+                            <label for="agcPosition" class="block text-xs font-medium text-gray-600">Position</label>
+                            <input type="text" id="agcPosition" class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        </div>
+                    </div>
+                    <!-- Right side: Owner -->
+                    <div class="space-y-4">
+                        <h3 class="font-semibold text-gray-800 text-base">For and on behalf of the owner</h3>
+                         <div>
+                            <label for="ownerName" class="block text-xs font-medium text-gray-600">Name (In capital letters)</label>
+                            <input type="text" id="ownerName" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        </div>
+                        <div>
+                            <label for="ownerPosition" class="block text-xs font-medium text-gray-600">Position</label>
+                            <input type="text" id="ownerPosition" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        </div>
+                         <div>
+                            <label for="ownerDate" class="block text-xs font-medium text-gray-600">Date</label>
+                            <input type="date" id="ownerDate" required class="mt-1 block w-full px-3 py-1.5 bg-white border rounded-md shadow-sm text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Signature</label>
+                            <div class="mt-1 relative">
+                                <canvas id="signature-pad" class="signature-pad-canvas w-full h-28"></canvas>
+                            </div>
+                            <p id="signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
+                            <div class="flex items-center justify-end mt-2">
+                                <button type="button" id="clear-signature" class="text-xs text-gray-600 hover:text-blue-600">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-6" id="controls">
+                <button type="button" id="submit-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+                    Submit & Finalize Job Sheet
+                </button>
+                 <button type="button" id="print-button" class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-3 hidden">
+                    Print / Save as PDF
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Get references to HTML elements ---
+            const canvas = document.getElementById('signature-pad');
+            const clearButton = document.getElementById('clear-signature');
+            const submitButton = document.getElementById('submit-button');
+            const printButton = document.getElementById('print-button');
+            const form = document.getElementById('worksheet-form');
+            const signatureError = document.getElementById('signature-error');
+            const workTableBody = document.getElementById('work-table-body');
+            const techLogBody = document.getElementById('tech-log-body');
+
+            // --- Initialize the Signature Pad ---
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)'
+            });
+
+            // --- Populate Data From URL ---
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const encodedData = urlParams.get('data');
+                if (encodedData) {
+                    const decodedString = atob(encodedData);
+                    const jobData = JSON.parse(decodedString);
+
+                    // Populate the form fields
+                    document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
+                    document.getElementById('clientName').value = jobData.clientName || '';
+                    document.getElementById('contactName').value = jobData.contactName || '';
+                    document.getElementById('phone').value = jobData.phone || '';
+                    document.getElementById('portOfCall').value = jobData.portOfCall || '';
+                    document.getElementById('work-description').value = jobData.workDescription || '';
+                }
+            } catch (error) {
+                console.error("Could not parse job data from URL:", error);
+                alert("Error: Could not load job data from the link. The link may be corrupted.");
+            }
+
+
+            // --- Populate Work Table ---
+            const workItems = [
+                { equipment: '', serial: '', work: '' },
+                { equipment: '', serial: '', work: '' },
+                { equipment: '', serial: '', work: '' },
+                { equipment: '', serial: '', work: '' },
+            ];
+
+            workItems.forEach((item) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-3 py-1.5"><input type="text" value="${item.equipment}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-3 py-1.5"><input type="text" value="${item.serial}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-3 py-1.5"><input type="text" value="${item.work}" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-3 py-1.5">
+                        <select class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                            <option>No</option>
+                            <option>Yes</option>
+                        </select>
+                    </td>
+                `;
+                workTableBody.appendChild(row);
+            });
+            
+            // --- Populate Tech Log Table ---
+            for (let i = 0; i < 3; i++) { // Create 3 empty rows
+                 const row = document.createElement('tr');
+                 row.innerHTML = `
+                    <td class="px-2 py-1"><input type="date" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-2 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-2 py-1"><input type="time" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                    <td class="px-2 py-1"><input type="text" class="w-full border-gray-300 rounded-md shadow-sm text-sm"></td>
+                 `;
+                 techLogBody.appendChild(row);
+            }
+
+
+            // --- Canvas resizing logic ---
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear(); 
+            }
+
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+
+            // --- Event Listeners ---
+            clearButton.addEventListener('click', () => {
+                signaturePad.clear();
+                signatureError.classList.add('hidden');
+            });
+
+            printButton.addEventListener('click', () => {
+                window.print();
+            });
+
+            submitButton.addEventListener('click', () => {
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                if (signaturePad.isEmpty()) {
+                    signatureError.classList.remove('hidden');
+                    return;
+                } else {
+                    signatureError.classList.add('hidden');
+                }
+
+                // --- Process Data for display ---
+                const signatureDataUrl = signaturePad.toDataURL('image/png');
+                
+                // Replace the canvas with an image of the signature
+                const sigImage = document.createElement('img');
+                sigImage.src = signatureDataUrl;
+                sigImage.alt = "Owner's signature";
+                sigImage.classList.add('border', 'rounded-md', 'bg-white', 'w-full', 'h-28', 'object-contain');
+                canvas.parentNode.replaceChild(sigImage, canvas);
+
+                // Show the print button
+                printButton.classList.remove('hidden');
+
+                // --- Disable Form and convert to "report view" ---
+                submitButton.style.display = 'none'; // Hide submit button
+                clearButton.style.display = 'none'; // Hide clear button
+                form.querySelectorAll('input, textarea, select').forEach(el => {
+                    // Don't disable already readonly fields again, just style them
+                    if (!el.hasAttribute('readonly')) {
+                         el.setAttribute('readonly', true);
+                    }
+                    el.classList.add('no-print-border'); // Add class to remove borders for printing
+                    el.style.border = 'none';
+                    el.style.backgroundColor = 'transparent';
+                    el.style.boxShadow = 'none';
+                    el.style.paddingLeft = '0';
+                    el.style.paddingRight = '0';
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

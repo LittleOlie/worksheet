@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worksheet Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Worksheet Manager</h1>
+            <p class="text-gray-500 mt-1">Create a new job sheet.</p>
+        </div>
+
+        <!-- Job Setup Form -->
+        <div id="setup-form" class="space-y-4">
+            <div>
+                <label for="jobOrderNumber" class="block text-sm font-medium text-gray-700">Job order number</label>
+                <input type="text" id="jobOrderNumber" value="01257-02" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+            </div>
+            <div>
+                <label for="clientName" class="block text-sm font-medium text-gray-700">Boat name / Client name</label>
+                <input type="text" id="clientName" value="MY-ALP" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+            </div>
+            <div>
+                <label for="contactName" class="block text-sm font-medium text-gray-700">Contact</label>
+                <input type="text" id="contactName" value="GIANLUCA" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                <input type="tel" id="phone" value="+39 335 602 3201" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+            </div>
+            <div>
+                <label for="portOfCall" class="block text-sm font-medium text-gray-700">Port of call / Place of work</label>
+                <input type="text" id="portOfCall" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+            </div>
+            <div>
+                <label for="workDescription" class="block text-sm font-medium text-gray-700">Work Description</label>
+                <textarea id="workDescription" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">INSTALLATION OF BASIC TOWPRO SYSTEM ON TENDER AND IN YACHT BRIDGE</textarea>
+            </div>
+
+            <div class="pt-4">
+                <button type="button" id="generate-link-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generate Worksheet Link
+                </button>
+            </div>
+        </div>
+
+        <!-- Generated Link Section -->
+        <div id="generated-link-section" class="hidden pt-6 border-t">
+            <h2 class="text-lg font-semibold text-gray-800">Link Generated Successfully!</h2>
+            <p class="text-sm text-gray-600 mt-1">Send this link to the technician. They will not be able to edit the details you've entered.</p>
+            <div class="mt-4 p-3 bg-gray-100 rounded-md">
+                <input type="text" id="generated-url" readonly class="w-full p-2 border-gray-300 rounded-md bg-white text-sm">
+            </div>
+            <div class="mt-2 text-right">
+                <button type="button" id="copy-link-button" class="text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm">
+                    Copy Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-link-button').addEventListener('click', () => {
+            // 1. Collect data from the form
+            const jobData = {
+                jobOrderNumber: document.getElementById('jobOrderNumber').value,
+                clientName: document.getElementById('clientName').value,
+                contactName: document.getElementById('contactName').value,
+                phone: document.getElementById('phone').value,
+                portOfCall: document.getElementById('portOfCall').value,
+                workDescription: document.getElementById('workDescription').value,
+            };
+
+            // 2. Convert the data object to a JSON string, then encode it in Base64
+            const dataString = JSON.stringify(jobData);
+            const encodedData = btoa(dataString);
+
+            // 3. Construct the full URL robustly
+            // This new logic works correctly on local files and on servers like Vercel.
+            const currentUrl = window.location.href;
+            const worksheetUrl = new URL('worksheet-template.html', currentUrl);
+            worksheetUrl.searchParams.set('data', encodedData);
+            const finalURL = worksheetUrl.href;
+
+
+            // 4. Display the generated link
+            const generatedLinkSection = document.getElementById('generated-link-section');
+            const generatedUrlInput = document.getElementById('generated-url');
+            
+            generatedUrlInput.value = finalURL;
+            generatedLinkSection.classList.remove('hidden');
+        });
+
+        document.getElementById('copy-link-button').addEventListener('click', () => {
+            const generatedUrlInput = document.getElementById('generated-url');
+            generatedUrlInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        });
+    </script>
+
+</body>
+</html>
