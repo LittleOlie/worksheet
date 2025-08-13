@@ -22,9 +22,30 @@
             width: 210mm;
             padding: 1cm;
             min-height: 297mm; /* Fixed A4 height */
+            position: relative; /* Needed for watermark positioning */
+            overflow: hidden; /* Clips the watermark at page edges */
         }
         .page.is-finalized {
             height: 297mm;
+        }
+        /* ADDED: Watermark Overlay Styles */
+        .watermark-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            z-index: 0;
+            color: rgba(156, 163, 175, 0.15); /* Light gray, semi-transparent */
+            font-size: 8rem;
+            font-weight: 800;
+            text-align: center;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+            transition: color 0.3s ease-in-out;
+        }
+        .watermark-overlay.finished-watermark {
+            color: rgba(239, 68, 68, 0.15); /* Red tint when finished */
         }
         .label-text {
             font-size: 0.7rem;
@@ -57,13 +78,13 @@
             min-height: 26px;
         }
         .final-text.work-done-final-view {
-            min-height: 317px; /* Fixed height for 20 rows */
+            min-height: 317px;
             padding-top: 4px;
             padding-bottom: 4px;
             display: block;
         }
         .final-text.tech-comments-final-view {
-            min-height: 54px; /* Fixed height for 3 rows */
+            min-height: 54px;
             padding-top: 4px;
             padding-bottom: 4px;
             display: block;
@@ -72,6 +93,8 @@
             background-color: #f9fafb;
             padding: 0.5rem;
             border-radius: 8px;
+            position: relative; /* Ensures form content appears above watermark */
+            z-index: 1;
         }
 
         @media print {
@@ -120,6 +143,8 @@
 <body class="bg-gray-200">
 
     <div id="main-page" class="page">
+        <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
+        
         <form id="worksheet-form" class="flex flex-col h-full">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
@@ -249,7 +274,9 @@
     </div>
 
     <div id="parts-page" class="page hidden">
-        <div class="flex justify-between items-center border-b-2 pb-2 mb-4">
+        <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
+
+        <div class="flex justify-between items-center border-b-2 pb-2 mb-4 form-section">
             <h2 class="text-xl font-bold">Additional Parts List</h2>
             <div id="partsPageJobOrder" class="text-sm font-medium"></div>
         </div>
@@ -297,7 +324,7 @@
                 <button type="button" id="scanner-close-button" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
             </div>
             <div class="p-4">
-                 <div id="scanner-container" class="w-full h-auto border bg-black rounded"></div>
+                <div id="scanner-container" class="w-full h-auto border bg-black rounded"></div>
                 <div id="scanner-error" class="text-red-500 text-sm mt-2 hidden"></div>
             </div>
         </div>
@@ -309,7 +336,7 @@
         let formDataForEdit = {};
         let currentScanTargetInput = null;
         
-        // --- Barcode Scanner Logic (using html5-qrcode library) ---
+        // --- Barcode Scanner Logic ---
         const scannerModal = document.getElementById('scanner-modal');
         const scannerError = document.getElementById('scanner-error');
         const html5QrCode = new Html5Qrcode("scanner-container");
@@ -331,21 +358,39 @@
                 .catch(err => {
                     scannerError.textContent = "Unable to start camera. Please grant permission and try again.";
                     scannerError.classList.remove('hidden');
-                    console.error("Scanner start error:", err);
                 });
         }
         
         function stopScanner() {
             html5QrCode.stop().then(ignore => {
                 scannerModal.classList.add('hidden');
-                currentScanTargetInput = null;
             }).catch(err => {
-                console.error("Scanner stop error:", err);
                 scannerModal.classList.add('hidden');
             });
         }
         
         document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
+
+        // --- Watermark Logic ---
+        const workCompletedSelect = document.getElementById('workCompleted');
+        const watermarkOverlays = document.querySelectorAll('.watermark-overlay');
+        const watermarkTexts = document.querySelectorAll('.watermark-text');
+
+        function updateWatermark() {
+            const isFinished = workCompletedSelect.value === 'Yes';
+            watermarkTexts.forEach(textEl => {
+                textEl.textContent = isFinished ? 'FINISHED' : 'AGC MARINE SOLUTIONS';
+            });
+            watermarkOverlays.forEach(overlayEl => {
+                 if (isFinished) {
+                    overlayEl.classList.add('finished-watermark');
+                } else {
+                    overlayEl.classList.remove('finished-watermark');
+                }
+            });
+        }
+        workCompletedSelect.addEventListener('change', updateWatermark);
+
 
         // --- Signature Pad Logic ---
         const ownerCanvas = document.getElementById('owner-signature-pad');
@@ -374,7 +419,6 @@
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
             
-            // Create quantity dropdown
             let quantityOptions = '';
             for (let i = 1; i <= 50; i++) {
                 quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`;
@@ -487,7 +531,6 @@
             techLogBody.appendChild(row);
         };
         
-        // Populate form from URL data if available
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
@@ -504,7 +547,10 @@
             document.getElementById('work-description').value = jobData.workDescription || '';
             if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
             if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
-            if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
+            if (jobData.workCompleted) {
+                document.getElementById('workCompleted').value = jobData.workCompleted;
+                updateWatermark();
+            }
             if (jobData.additionalParts) {
                 document.getElementById('additionalParts').value = jobData.additionalParts;
                 if (jobData.additionalParts === 'Yes') {
@@ -538,6 +584,7 @@
             }
         }
         resizeFormCanvases();
+        updateWatermark();
 
 
         const setupCharacterCounter = (textareaId, counterId) => {
@@ -577,7 +624,6 @@
 
             document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
 
-            // Collect all form data including parts list
             formDataForEdit = {
                 jobOrderNumber: document.getElementById('jobOrderNumber').value,
                 clientName: document.getElementById('clientName').value,
@@ -610,7 +656,6 @@
                 ])
             };
 
-            // Convert all inputs to static text for printing
             document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => {
                 let value = el.value;
                 if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
@@ -632,7 +677,6 @@
                 }
             });
             
-            // Convert main log table inputs
             Array.from(techLogBody.rows).forEach(row => {
                 row.querySelectorAll('input').forEach(input => {
                     const cell = input.parentElement;
@@ -641,7 +685,6 @@
                 });
             });
 
-            // Convert parts list table inputs
             Array.from(partsListBody.rows).forEach(row => {
                 row.querySelectorAll('input, select').forEach(input => {
                     let value = input.value;
@@ -676,7 +719,6 @@
             document.getElementById('controls').remove();
             document.body.classList.remove('bg-gray-200');
 
-            // Timeout allows DOM to update before printing
             setTimeout(() => {
                 window.print();
             }, 100);
