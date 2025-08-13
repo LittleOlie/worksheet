@@ -73,10 +73,10 @@
                 box-shadow: none;
                 background: white;
                 width: 100%;
-                /* FIX: Remove fixed heights and hidden overflow to allow content to flow across pages */
+                /* FIX: Enforce single-page printing by hiding any overflow. */
+                height: 100%;
+                overflow: hidden;
                 min-height: initial;
-                height: auto;
-                overflow: visible;
             }
             #controls, #add-log-entry-button { display: none !important; }
 
@@ -106,7 +106,7 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex-grow flex flex-col">
+        <form id="worksheet-form" class="flex flex-col">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
@@ -137,11 +137,11 @@
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col flex-grow">
+            <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" maxlength="1500"></textarea>
+                <textarea id="workDone" class="value-input" rows="10" maxlength="1500"></textarea>
                 <div class="label-text mt-2">Technicians comments</div>
-                <textarea id="techComments" rows="2" class="value-input"></textarea>
+                <textarea id="techComments" rows="3" class="value-input"></textarea>
             </div>
 
 
