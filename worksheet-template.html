@@ -63,15 +63,25 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0.5cm;
+                margin: 0; /* Margin is handled by .page padding */
             }
-            body, .page, .page.is-finalized {
+            /* MODIFIED: More robust print styles to prevent blank pages on mobile */
+            html, body {
+                width: 210mm;
+                height: 297mm;
                 margin: 0;
+                padding: 0;
                 box-shadow: none;
-                background: white;
+                overflow: hidden;
+            }
+            .page, .page.is-finalized {
                 width: 100%;
                 height: 100%;
+                margin: 0;
+                box-shadow: none;
                 overflow: hidden;
+                padding: 0.5cm; /* Apply padding here for print */
+                border-radius: 0;
             }
             #controls, #add-log-entry-button { display: none !important; }
             .form-section {
@@ -284,7 +294,6 @@
                 checkLogLimit();
             };
             
-            // MODIFIED: This now calls addLogRow with no arguments, letting the default parameter work correctly.
             addLogEntryButton.addEventListener('click', () => addLogRow());
 
             try {
@@ -293,7 +302,6 @@
                 if (encodedData) {
                     const jobData = JSON.parse(atob(encodedData));
                     
-                    // MODIFIED: Explicitly map incoming data to the correct element IDs
                     document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
                     document.getElementById('clientName').value = jobData.clientName || '';
                     document.getElementById('contactName').value = jobData.contactName || '';
@@ -301,7 +309,6 @@
                     document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
                     document.getElementById('work-description').value = jobData.workDescription || '';
 
-                    // Populate other fields if they exist in the 'edit' data
                     if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
                     if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
                     if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
@@ -313,7 +320,6 @@
                     if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
                     if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
 
-                    // Populate technician log
                     techLogBody.innerHTML = '';
                     if (jobData.techLog && jobData.techLog.length > 0) {
                         jobData.techLog.forEach(logData => addLogRow(logData));
@@ -370,8 +376,8 @@
                     clientName: document.getElementById('clientName').value,
                     contactName: document.getElementById('contactName').value,
                     phone: document.getElementById('phone').value,
-                    portOfCall: document.getElementById('portOfCallDisplay').textContent, // Send correct key
-                    workDescription: document.getElementById('work-description').value, // Send correct key
+                    portOfCall: document.getElementById('portOfCallDisplay').textContent,
+                    workDescription: document.getElementById('work-description').value,
                     workDone: document.getElementById('workDone').value,
                     techComments: document.getElementById('techComments').value,
                     workCompleted: document.getElementById('workCompleted').value,
@@ -420,7 +426,6 @@
                     });
                 });
 
-                // MODIFIED: This function now uses the correct signature pad instances
                 const sigToImage = (padInstance, containerId, clearContainerId) => {
                     if (!padInstance || !document.getElementById(containerId)) return;
                     
