@@ -134,16 +134,16 @@
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col" style="height: 95mm;">
+            <div class="form-section mb-2 flex flex-col" style="height: 85mm;">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="850"></textarea>
+                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2" style="height: 25mm;">
+            <div class="form-section mb-2" style="height: 35mm;">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -262,7 +262,7 @@
             const techLogBody = document.getElementById('tech-log-body');
             const addLogEntryButton = document.getElementById('add-log-entry-button');
 
-            // NEW: Logic to limit technician log entries
+            // Logic to limit technician log entries
             const checkLogLimit = () => {
                 if (techLogBody.rows.length >= 3) {
                     addLogEntryButton.disabled = true;
@@ -276,6 +276,7 @@
             };
 
             const addLogRow = (data = ['', '', '', '', '', '']) => {
+                if (techLogBody.rows.length >= 3) return; // Failsafe
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="p-1"><input type="date" class="value-input log-date" value="${data[0]}"></td>
@@ -288,11 +289,7 @@
                 checkLogLimit();
             };
 
-            addLogEntryButton.addEventListener('click', () => {
-                 if (techLogBody.rows.length < 3) {
-                    addLogRow();
-                }
-            });
+            addLogEntryButton.addEventListener('click', addLogRow);
 
 
             // --- DATA HANDLING (EDIT AND URL PARSING) ---
@@ -311,7 +308,11 @@
                     });
                     // Populate technician log
                     techLogBody.innerHTML = ''; // Clear default rows
-                    jobData.techLog.forEach(logData => addLogRow(logData));
+                    if (jobData.techLog && jobData.techLog.length > 0) {
+                        jobData.techLog.forEach(logData => addLogRow(logData));
+                    } else {
+                         addLogRow(); // Add one default if log was empty
+                    }
                 } else {
                     addLogRow(); // Add one default row if no data
                 }
@@ -360,7 +361,7 @@
                 }
                 document.getElementById('owner-signature-error').classList.add('hidden');
 
-                // NEW: Capture all form data before finalizing
+                // Capture all form data before finalizing
                 formDataForEdit = {
                     jobOrderNumber: document.getElementById('jobOrderNumber').value,
                     clientName: document.getElementById('clientName').value,
@@ -408,6 +409,18 @@
                         el.parentNode.replaceChild(textElement, el);
                     }
                 });
+                
+                // Finalize Tech Log
+                Array.from(techLogBody.rows).forEach(row => {
+                    Array.from(row.cells).forEach(cell => {
+                        const input = cell.querySelector('input');
+                        if (input) {
+                            cell.textContent = input.value;
+                            cell.classList.add('p-1', 'final-text');
+                        }
+                    });
+                });
+
 
                 // Handle Signatures
                 const sigToImage = (canvas, containerId, clearContainerId) => {
@@ -418,7 +431,8 @@
                     const container = document.getElementById(containerId);
                     container.innerHTML = '';
                     container.appendChild(sigImage);
-                    document.getElementById(clearContainerId).remove();
+                    const clearButtonContainer = document.getElementById(clearContainerId);
+                    if (clearButtonContainer) clearButtonContainer.remove();
                 };
                 sigToImage(ownerCanvas, 'owner-signature-container', 'clear-owner-signature-container');
                 sigToImage(agcCanvas, 'agc-signature-container', 'clear-agc-signature-container');
@@ -426,6 +440,7 @@
 
 
                 document.getElementById('submit-button').style.display = 'none';
+                document.getElementById('add-log-entry-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
                 document.getElementById('edit-button').classList.remove('hidden');
             });
