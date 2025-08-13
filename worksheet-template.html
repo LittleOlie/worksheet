@@ -54,6 +54,19 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        /* ADDED: Styles for fixed-height sections in the final view */
+        .final-text.work-done-final-view {
+            min-height: 285px; /* Fixed height for 18 rows */
+            padding-top: 4px;
+            padding-bottom: 4px;
+            display: block;
+        }
+        .final-text.tech-comments-final-view {
+            min-height: 54px; /* Fixed height for 3 rows */
+            padding-top: 4px;
+            padding-bottom: 4px;
+            display: block;
+        }
         .form-section {
             background-color: #f9fafb;
             padding: 0.5rem;
@@ -82,7 +95,7 @@
                 padding: 0.5cm;
                 border-radius: 0;
             }
-            #controls, #add-log-entry-button, .expand-signature-button { display: none !important; }
+            #controls, .expand-signature-button { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
                 background-color: white !important;
@@ -96,11 +109,14 @@
             .final-text {
                  padding: 1px 0 !important;
             }
+            .final-text.work-done-final-view, .final-text.tech-comments-final-view {
+                border: none !important;
+            }
             .gap-2 {
                 gap: 0.25rem !important;
             }
              .mb-2 {
-                margin-bottom: 0.25rem !important;
+                 margin-bottom: 0.25rem !important;
             }
         }
     </style>
@@ -163,9 +179,6 @@
                     </thead>
                     <tbody id="tech-log-body"></tbody>
                 </table>
-                <div class="text-right mt-1">
-                    <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
-                </div>
             </div>
 
             <div class="grid grid-cols-12 gap-2 mb-2">
@@ -344,74 +357,60 @@
             resizeFormCanvases();
 
             const techLogBody = document.getElementById('tech-log-body');
-            const addLogEntryButton = document.getElementById('add-log-entry-button');
-
-            const checkLogLimit = () => {
-                if (techLogBody.rows.length >= 3) {
-                    addLogEntryButton.disabled = true;
-                    addLogEntryButton.textContent = 'Limit of 3 reached';
-                    addLogEntryButton.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    addLogEntryButton.disabled = false;
-                    addLogEntryButton.textContent = 'Add Log Entry';
-                    addLogEntryButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            };
+            const MAX_LOG_ROWS = 3;
 
             const addLogRow = (data = ['', '', '', '', '', '']) => {
-                if (techLogBody.rows.length >= 3) return;
                 const row = document.createElement('tr');
+                row.className = 'border-b last:border-b-0';
                 row.innerHTML = `
-                    <td class="pr-2"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
-                    <td class="pr-2"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
-                    <td class="pr-2"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
-                    <td class="pr-2"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
-                    <td class="pr-2"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
-                    <td class="pr-2"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
+                    <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
+                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
+                    <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
+                    <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
+                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
+                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
-                checkLogLimit();
             };
             
-            addLogEntryButton.addEventListener('click', () => addLogRow());
-
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const encodedData = urlParams.get('data');
+                let jobData = {};
                 if (encodedData) {
-                    const jobData = JSON.parse(atob(encodedData));
-                    
-                    document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
-                    document.getElementById('clientName').value = jobData.clientName || '';
-                    document.getElementById('contactName').value = jobData.contactName || '';
-                    document.getElementById('phone').value = jobData.phone || '';
-                    document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
-                    document.getElementById('work-description').value = jobData.workDescription || '';
-
-                    if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
-                    if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
-                    if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
-                    if (jobData.additionalParts) document.getElementById('additionalParts').value = jobData.additionalParts;
-                    if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
-                    if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
-                    if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
-                    if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
-                    if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
-                    if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
-
-                    techLogBody.innerHTML = '';
-                    if (jobData.techLog && jobData.techLog.length > 0) {
-                        jobData.techLog.forEach(logData => addLogRow(logData));
-                    } else {
-                         addLogRow();
-                    }
-                } else {
-                    addLogRow();
+                    jobData = JSON.parse(atob(encodedData));
                 }
+                
+                document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
+                document.getElementById('clientName').value = jobData.clientName || '';
+                document.getElementById('contactName').value = jobData.contactName || '';
+                document.getElementById('phone').value = jobData.phone || '';
+                document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
+                document.getElementById('work-description').value = jobData.workDescription || '';
+
+                if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
+                if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
+                if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
+                if (jobData.additionalParts) document.getElementById('additionalParts').value = jobData.additionalParts;
+                if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
+                if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
+                if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
+                if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
+                if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
+                if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
+
+                techLogBody.innerHTML = '';
+                const logs = (jobData && jobData.techLog) ? jobData.techLog : [];
+                for (let i = 0; i < MAX_LOG_ROWS; i++) {
+                    addLogRow(logs[i]);
+                }
+
             } catch (error) {
                 console.error("Could not parse job data from URL:", error);
-                addLogRow();
+                techLogBody.innerHTML = '';
+                for (let i = 0; i < MAX_LOG_ROWS; i++) {
+                    addLogRow();
+                }
             }
-            checkLogLimit();
 
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
@@ -482,7 +481,14 @@
                     const textElement = document.createElement('div');
                     textElement.className = 'final-text';
                     textElement.textContent = value || ' ';
-                    if (el.id === 'workDone' || el.id === 'techComments') {
+
+                    if (el.id === 'workDone') {
+                        textElement.classList.add('work-done-final-view');
+                        const counterElement = el.nextElementSibling;
+                        el.parentNode.replaceChild(textElement, el);
+                        if (counterElement) counterElement.remove();
+                    } else if (el.id === 'techComments') {
+                         textElement.classList.add('tech-comments-final-view');
                         const counterElement = el.nextElementSibling;
                         el.parentNode.replaceChild(textElement, el);
                         if (counterElement) counterElement.remove();
@@ -498,8 +504,10 @@
                     Array.from(row.cells).forEach(cell => {
                         const input = cell.querySelector('input');
                         if (input) {
-                            cell.textContent = input.value;
+                            cell.textContent = input.value || ' ';
                             cell.classList.add('final-text');
+                            cell.style.paddingTop = '1px';
+                            cell.style.paddingBottom = '1px';
                         }
                     });
                 });
@@ -529,7 +537,6 @@
                 document.getElementById('owner-signature-error').classList.add('hidden');
 
                 document.getElementById('submit-button').style.display = 'none';
-                document.getElementById('add-log-entry-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
                 document.getElementById('edit-button').classList.remove('hidden');
             });
