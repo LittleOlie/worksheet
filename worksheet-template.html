@@ -63,9 +63,8 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0; /* Margin is handled by .page padding */
+                margin: 0;
             }
-            /* MODIFIED: More robust print styles to prevent blank pages on mobile */
             html, body {
                 width: 210mm;
                 height: 297mm;
@@ -80,10 +79,10 @@
                 margin: 0;
                 box-shadow: none;
                 overflow: hidden;
-                padding: 0.5cm; /* Apply padding here for print */
+                padding: 0.5cm;
                 border-radius: 0;
             }
-            #controls, #add-log-entry-button { display: none !important; }
+            #controls, #add-log-entry-button, .expand-signature-button { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
                 background-color: white !important;
@@ -112,16 +111,16 @@
         <form id="worksheet-form" class="flex flex-col h-full">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
-                    <div class="form-section" style="height: 15mm;">
+                    <div class="form-section">
                         <div class="label-text">Job order number</div>
                         <input type="text" id="jobOrderNumber" readonly class="value-input">
                     </div>
-                    <div class="form-section" style="height: 15mm;">
+                    <div class="form-section">
                         <div class="label-text">Port of call / Place of work</div>
                         <div id="portOfCallDisplay" class="final-text"></div>
                     </div>
                 </div>
-                <div class="form-section" style="height: 30mm;">
+                <div class="form-section">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
                     <div class="mt-2">
@@ -135,21 +134,21 @@
                 </div>
             </div>
 
-            <div class="form-section mb-2" style="height: 20mm;">
+            <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col" style="height: 80mm;">
+            <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
+                <textarea id="workDone" class="value-input" rows="13" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2" style="height: 35mm;">
+            <div class="form-section mb-2">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -170,7 +169,7 @@
             </div>
 
             <div class="grid grid-cols-12 gap-2 mb-2">
-                <div class="col-span-8 form-section" style="height: 20mm;">
+                <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
@@ -183,7 +182,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-span-4 form-section" style="height: 20mm;">
+                <div class="col-span-4 form-section">
                     <div class="label-text">Next port of call</div>
                     <input type="text" id="nextPort" class="value-input">
                 </div>
@@ -192,7 +191,7 @@
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <div class="grid grid-cols-2 gap-2">
-                <div class="form-section flex flex-col" style="height: 60mm;">
+                <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -204,14 +203,17 @@
                         <div>
                             <label class="label-text">Signature</label>
                             <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
-                            <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
+                            <div id="clear-agc-signature-container" class="flex justify-between items-center text-xs">
+                                <button type="button" data-target-pad="agc" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
+                                <button type="button" id="clear-agc-signature" class="text-blue-600 hover:underline">Clear</button>
+                            </div>
                         </div>
                     </div>
                     <div class="text-xs mt-auto">
                         <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
-                <div class="form-section flex flex-col" style="height: 60mm;">
+                <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
                      <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -226,7 +228,10 @@
                             <label class="label-text">Signature</label>
                             <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
-                             <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
+                             <div id="clear-owner-signature-container" class="flex justify-between items-center text-xs">
+                                <button type="button" data-target-pad="owner" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
+                                <button type="button" id="clear-owner-signature" class="text-blue-600 hover:underline">Clear</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,17 +245,90 @@
         </div>
     </div>
 
+    <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
+            <div class="p-4 border-b">
+                <h3 class="text-lg font-medium">Please Sign Below</h3>
+            </div>
+            <div class="p-4 flex-grow relative">
+                <canvas id="modal-signature-canvas" class="border border-gray-300 rounded-md"></canvas>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end space-x-2">
+                <button type="button" id="modal-clear-button" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Clear</button>
+                <button type="button" id="modal-cancel-button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button>
+                <button type="button" id="modal-save-button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Signature</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let formDataForEdit = {};
 
             const ownerCanvas = document.getElementById('owner-signature-pad');
             const agcCanvas = document.getElementById('agc-signature-pad');
+            const ownerSignaturePad = new SignaturePad(ownerCanvas);
+            const agcSignaturePad = new SignaturePad(agcCanvas);
 
-            const ownerSignaturePad = new SignaturePad(ownerCanvas, { penColor: "rgb(0, 0, 0)" });
-            const agcSignaturePad = new SignaturePad(agcCanvas, { penColor: "rgb(0, 0, 0)" });
+            // --- NEW: Modal Signature Logic ---
+            const signatureModal = document.getElementById('signature-modal');
+            const modalCanvas = document.getElementById('modal-signature-canvas');
+            const modalSignaturePad = new SignaturePad(modalCanvas);
+            let currentEditingPad = null;
 
-            function resizeCanvases() {
+            function resizeModalCanvas() {
+                const canvas = modalCanvas;
+                if (!canvas || !canvas.parentElement) return;
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width * ratio;
+                canvas.height = rect.height * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                modalSignaturePad.clear();
+            }
+            
+            document.querySelectorAll('.expand-signature-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const target = event.target.dataset.targetPad;
+                    currentEditingPad = (target === 'owner') ? ownerSignaturePad : agcSignaturePad;
+                    
+                    resizeModalCanvas(); // Resize first
+                    
+                    if (!currentEditingPad.isEmpty()) {
+                        modalSignaturePad.fromDataURL(currentEditingPad.toDataURL());
+                    } else {
+                        modalSignaturePad.clear();
+                    }
+                    signatureModal.classList.remove('hidden');
+                });
+            });
+
+            document.getElementById('modal-save-button').addEventListener('click', () => {
+                if (currentEditingPad) {
+                    if (!modalSignaturePad.isEmpty()) {
+                        currentEditingPad.fromDataURL(modalSignaturePad.toDataURL());
+                    } else {
+                        currentEditingPad.clear();
+                    }
+                }
+                signatureModal.classList.add('hidden');
+                currentEditingPad = null;
+            });
+
+            document.getElementById('modal-cancel-button').addEventListener('click', () => {
+                signatureModal.classList.add('hidden');
+                currentEditingPad = null;
+            });
+
+            document.getElementById('modal-clear-button').addEventListener('click', () => {
+                modalSignaturePad.clear();
+            });
+
+            // --- End of Modal Logic ---
+
+
+            function resizeFormCanvases() {
                 const canvases = [ownerCanvas, agcCanvas];
                 canvases.forEach(canvas => {
                     if (!canvas) return;
@@ -259,11 +337,11 @@
                     canvas.height = canvas.offsetHeight * ratio;
                     canvas.getContext("2d").scale(ratio, ratio);
                 });
-                ownerSignaturePad.clear();
-                agcSignaturePad.clear();
+                ownerSignaturePad.fromData(ownerSignaturePad.toData());
+                agcSignaturePad.fromData(agcSignaturePad.toData());
             }
-            window.addEventListener("resize", resizeCanvases);
-            resizeCanvases();
+            window.addEventListener("resize", resizeFormCanvases);
+            resizeFormCanvases();
 
             const techLogBody = document.getElementById('tech-log-body');
             const addLogEntryButton = document.getElementById('add-log-entry-button');
