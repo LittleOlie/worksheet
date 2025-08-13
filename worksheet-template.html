@@ -54,7 +54,7 @@
         /* On-screen layout: clean cards */
         .form-section {
             background-color: #f9fafb;
-            padding: 0.75rem;
+            padding: 0.5rem; /* Reduced padding */
             border-radius: 8px;
         }
 
@@ -77,13 +77,19 @@
                 border: 1px solid black !important;
                 background-color: white !important;
                 border-radius: 0 !important;
-                padding: 0.5rem !important;
+                padding: 0.25rem 0.5rem !important; /* Tighter padding for print */
             }
             .value-input {
                 border: none !important;
             }
             .final-text {
                  padding: 2px 0 !important;
+            }
+            .gap-2 {
+                gap: 0.25rem !important; /* Tighter gap for print */
+            }
+             .mb-2 {
+                margin-bottom: 0.25rem !important; /* Tighter margin for print */
             }
         }
     </style>
@@ -93,7 +99,7 @@
     <div class="page">
         <form id="worksheet-form">
             <!-- Header Section -->
-            <div class="grid grid-cols-12 gap-4 mb-4">
+            <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-7 form-section">
                     <div class="label-text">Job order number</div>
                     <input type="text" id="jobOrderNumber" readonly class="value-input">
@@ -114,7 +120,7 @@
             </div>
 
             <!-- Second Row Section -->
-            <div class="grid grid-cols-12 gap-4 mb-4">
+            <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-7 form-section">
                     <div class="label-text">Port of call / Place of work</div>
                     <input type="text" id="portOfCall" readonly class="value-input">
@@ -126,23 +132,23 @@
             </div>
             
             <!-- Work To Do Section -->
-            <div class="form-section mb-4">
-                <div class="label-text mb-2">Work Description</div>
+            <div class="form-section mb-2">
+                <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
             </div>
             
             <!-- Work Done / Comments Section -->
-            <div class="form-section mb-4">
+            <div class="form-section mb-2">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" rows="6" class="value-input"></textarea>
-                <div class="label-text mt-4">Technicians comments</div>
-                <textarea id="techComments" rows="3" class="value-input"></textarea>
+                <textarea id="workDone" rows="8" class="value-input"></textarea>
+                <div class="label-text mt-2">Technicians comments</div>
+                <textarea id="techComments" rows="2" class="value-input"></textarea>
             </div>
 
 
             <!-- Technician Log Section -->
-            <div class="form-section mb-4">
-                 <div class="label-text mb-2">Technician Log</div>
+            <div class="form-section mb-2">
+                 <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
                         <tr class="border-b">
@@ -159,7 +165,7 @@
             </div>
             
             <!-- Office Use Section -->
-            <div class="grid grid-cols-12 gap-4 mb-4">
+            <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
@@ -180,32 +186,37 @@
             </div>
 
             <!-- Agreement Text -->
-            <p class="text-center text-xs italic my-2">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
+            <p class="text-center text-xs italic my-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <!-- Signature Section -->
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-2">
                 <div class="form-section">
                     <div class="label-text font-bold">For and on behalf of AGC Marine Solutions</div>
                     <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="agcName" class="value-input"></div>
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="agcPosition" class="value-input"></div>
+                    <div class="mt-2">
+                        <label class="label-text">Signature</label>
+                        <div id="agc-signature-container" class="h-12 bg-white rounded-md border"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                        <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
+                    </div>
                 </div>
                 <div class="form-section">
                     <div class="label-text font-bold">For and on behalf of the owner</div>
                     <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="ownerName" required class="value-input"></div>
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="ownerPosition" required class="value-input"></div>
-                    <div class="grid grid-cols-2 gap-4 mt-2">
-                        <div><label class="label-text">Signature</label><div id="signature-container" class="h-16 bg-white rounded-md border"><canvas id="signature-pad" class="w-full h-full"></canvas></div></div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div><label class="label-text">Signature</label><div id="owner-signature-container" class="h-12 bg-white rounded-md border"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div></div>
                         <div><label class="label-text">Date</label><input type="date" id="ownerDate" required class="value-input"></div>
                     </div>
-                    <p id="signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
-                    <div id="clear-signature-container" class="text-right"><button type="button" id="clear-signature" class="text-xs text-blue-600">Clear</button></div>
+                    <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
+                    <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
                 </div>
             </div>
             
-            <div class="text-center text-xs mt-2">Agc marine solutions ( ) GM 2007-2025</div>
+            <div class="text-center text-xs mt-1">Agc marine solutions ( ) GM 2007-2025</div>
         </form>
 
-        <div class="pt-4" id="controls">
+        <div class="pt-3" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
         </div>
@@ -213,18 +224,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('signature-pad');
-            const signaturePad = new SignaturePad(canvas, { penColor: "rgb(0, 0, 0)" });
+            const ownerCanvas = document.getElementById('owner-signature-pad');
+            const agcCanvas = document.getElementById('agc-signature-pad');
+            
+            const ownerSignaturePad = new SignaturePad(ownerCanvas, { penColor: "rgb(0, 0, 0)" });
+            const agcSignaturePad = new SignaturePad(agcCanvas, { penColor: "rgb(0, 0, 0)" });
 
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                signaturePad.clear();
+            function resizeCanvases() {
+                const canvases = [ownerCanvas, agcCanvas];
+                canvases.forEach(canvas => {
+                    if (!canvas) return;
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext("2d").scale(ratio, ratio);
+                });
+                ownerSignaturePad.clear();
+                agcSignaturePad.clear();
             }
-            window.addEventListener("resize", resizeCanvas);
-            resizeCanvas();
+            window.addEventListener("resize", resizeCanvases);
+            resizeCanvases();
 
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -249,7 +268,8 @@
                 techLogBody.appendChild(row);
             }
 
-            document.getElementById('clear-signature').addEventListener('click', () => signaturePad.clear());
+            document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
+            document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
 
             document.getElementById('submit-button').addEventListener('click', () => {
                 const form = document.getElementById('worksheet-form');
@@ -257,11 +277,11 @@
                     form.reportValidity();
                     return;
                 }
-                if (signaturePad.isEmpty()) {
-                    document.getElementById('signature-error').classList.remove('hidden');
+                if (ownerSignaturePad.isEmpty()) {
+                    document.getElementById('owner-signature-error').classList.remove('hidden');
                     return;
                 }
-                document.getElementById('signature-error').classList.add('hidden');
+                document.getElementById('owner-signature-error').classList.add('hidden');
 
                 form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
@@ -278,13 +298,24 @@
                     }
                 });
 
-                const signatureDataUrl = signaturePad.toDataURL('image/png');
-                const sigImage = document.createElement('img');
-                sigImage.src = signatureDataUrl;
-                sigImage.className = 'w-full h-16 object-contain';
-                document.getElementById('signature-container').innerHTML = '';
-                document.getElementById('signature-container').appendChild(sigImage);
-                document.getElementById('clear-signature-container').remove();
+                // Handle Owner Signature
+                const ownerSigUrl = ownerSignaturePad.toDataURL('image/png');
+                const ownerSigImage = document.createElement('img');
+                ownerSigImage.src = ownerSigUrl;
+                ownerSigImage.className = 'w-full h-12 object-contain';
+                document.getElementById('owner-signature-container').innerHTML = '';
+                document.getElementById('owner-signature-container').appendChild(ownerSigImage);
+                document.getElementById('clear-owner-signature-container').remove();
+
+                // Handle AGC Signature
+                const agcSigUrl = agcSignaturePad.toDataURL('image/png');
+                const agcSigImage = document.createElement('img');
+                agcSigImage.src = agcSigUrl;
+                agcSigImage.className = 'w-full h-12 object-contain';
+                document.getElementById('agc-signature-container').innerHTML = '';
+                document.getElementById('agc-signature-container').appendChild(agcSigImage);
+                document.getElementById('clear-agc-signature-container').remove();
+
 
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
