@@ -104,9 +104,7 @@
 
     <div class="page">
         <form id="worksheet-form" class="flex-grow flex flex-col">
-            <!-- Header Section -->
             <div class="grid grid-cols-2 gap-2 mb-2">
-                <!-- Left Column -->
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
                         <div class="label-text">Job order number</div>
@@ -117,7 +115,6 @@
                         <div id="portOfCallDisplay" class="final-text"></div>
                     </div>
                 </div>
-                <!-- Right Column -->
                 <div class="form-section">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
@@ -132,13 +129,11 @@
                 </div>
             </div>
             
-            <!-- Work To Do Section -->
             <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
             </div>
             
-            <!-- Work Done / Comments Section -->
             <div class="form-section mb-2 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input flex-grow" maxlength="1500"></textarea>
@@ -147,7 +142,6 @@
             </div>
 
 
-            <!-- Technician Log Section -->
             <div class="form-section mb-2">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
@@ -168,7 +162,6 @@
                 </div>
             </div>
             
-            <!-- Office Use Section -->
             <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
@@ -189,13 +182,11 @@
                 </div>
             </div>
 
-            <!-- Agreement Text -->
             <p class="text-center text-xs italic my-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
-            <!-- Signature Section -->
             <div class="grid grid-cols-2 gap-2">
                 <div class="form-section">
-                    <div class="label-text font-bold mb-2">For and on behalf of AGC Marine Solutions</div>
+                    <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
@@ -208,6 +199,9 @@
                             <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
+                    </div>
+                    <div class="text-xs mt-4">
+                        <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
                 <div class="form-section">
@@ -232,9 +226,7 @@
             </div>
         </form>
         
-        <div class="text-center text-xs mt-auto pt-2">AGC MARINE SOLUTIONS | Contact: +33492919608   support@agcmarine.com</div>
-
-        <div class="pt-3" id="controls">
+        <div class="pt-3 mt-auto" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
         </div>
