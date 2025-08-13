@@ -283,21 +283,37 @@
                 techLogBody.appendChild(row);
                 checkLogLimit();
             };
-
-            addLogEntryButton.addEventListener('click', addLogRow);
+            
+            // MODIFIED: This now calls addLogRow with no arguments, letting the default parameter work correctly.
+            addLogEntryButton.addEventListener('click', () => addLogRow());
 
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const encodedData = urlParams.get('data');
                 if (encodedData) {
                     const jobData = JSON.parse(atob(encodedData));
-                    Object.keys(jobData).forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                           if (id === 'portOfCallDisplay') el.textContent = jobData[id];
-                           else el.value = jobData[id];
-                        }
-                    });
+                    
+                    // MODIFIED: Explicitly map incoming data to the correct element IDs
+                    document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
+                    document.getElementById('clientName').value = jobData.clientName || '';
+                    document.getElementById('contactName').value = jobData.contactName || '';
+                    document.getElementById('phone').value = jobData.phone || '';
+                    document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
+                    document.getElementById('work-description').value = jobData.workDescription || '';
+
+                    // Populate other fields if they exist in the 'edit' data
+                    if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
+                    if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
+                    if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
+                    if (jobData.additionalParts) document.getElementById('additionalParts').value = jobData.additionalParts;
+                    if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
+                    if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
+                    if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
+                    if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
+                    if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
+                    if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
+
+                    // Populate technician log
                     techLogBody.innerHTML = '';
                     if (jobData.techLog && jobData.techLog.length > 0) {
                         jobData.techLog.forEach(logData => addLogRow(logData));
@@ -354,8 +370,8 @@
                     clientName: document.getElementById('clientName').value,
                     contactName: document.getElementById('contactName').value,
                     phone: document.getElementById('phone').value,
-                    portOfCallDisplay: document.getElementById('portOfCallDisplay').textContent,
-                    'work-description': document.getElementById('work-description').value,
+                    portOfCall: document.getElementById('portOfCallDisplay').textContent, // Send correct key
+                    workDescription: document.getElementById('work-description').value, // Send correct key
                     workDone: document.getElementById('workDone').value,
                     techComments: document.getElementById('techComments').value,
                     workCompleted: document.getElementById('workCompleted').value,
@@ -411,7 +427,7 @@
                     const container = document.getElementById(containerId);
                     
                     if (padInstance.isEmpty()) {
-                        container.innerHTML = '<div class="final-text">&nbsp;</div>'; // Show empty space if no signature
+                        container.innerHTML = '<div class="final-text">&nbsp;</div>';
                     } else {
                         const sigUrl = padInstance.toDataURL('image/png');
                         const sigImage = document.createElement('img');
