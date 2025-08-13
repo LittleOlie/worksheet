@@ -14,7 +14,8 @@
         }
         .page {
             background: white;
-            display: block;
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
@@ -107,7 +108,7 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form">
+        <form id="worksheet-form" class="flex-grow">
             <!-- Header Section -->
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <!-- Left Column -->
@@ -209,7 +210,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-18 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
                     </div>
@@ -227,16 +228,16 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-18 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="text-center text-xs mt-1">AGC MARINE SOLUTIONS | Contact: +33492919608   support@agcmarine.com</div>
         </form>
+        
+        <div class="text-center text-xs mt-auto pt-2">AGC MARINE SOLUTIONS | Contact: +33492919608   support@agcmarine.com</div>
 
         <div class="pt-3" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
