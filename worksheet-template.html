@@ -60,7 +60,7 @@
             background-color: #f9fafb;
             padding: 0.5rem; /* Reduced padding */
             border-radius: 8px;
-            height: 100%; /* Ensure sections in a row have same height */
+            /* height: 100%; - Removed for better flex growth */
         }
 
         @media print {
@@ -73,7 +73,7 @@
                 box-shadow: none;
                 background: white;
                 width: 100%;
-                /* FIX: Enforce single-page printing by hiding any overflow. */
+                /* Enforce single-page printing by hiding any overflow. */
                 height: 100%;
                 overflow: hidden;
                 min-height: initial;
@@ -106,7 +106,7 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex flex-col">
+        <form id="worksheet-form" class="flex flex-col flex-grow">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
@@ -134,20 +134,17 @@
 
             <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
-                <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
+                <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col">
+            <div class="form-section mb-2 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
-                <div>
-                    <textarea id="workDone" class="value-input" rows="10" maxlength="750"></textarea>
-                    <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
-                </div>
+                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
+                <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
+
                 <div class="label-text mt-2">Technicians comments</div>
-                <div>
-                    <textarea id="techComments" rows="3" class="value-input" maxlength="250"></textarea>
-                    <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
-                </div>
+                <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
+                <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
 
@@ -285,7 +282,6 @@
 
             const addLogRow = () => {
                 const row = document.createElement('tr');
-                // MODIFIED: Added maxlength="50" to the notes input
                 row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
             };
@@ -293,7 +289,7 @@
             addLogEntryButton.addEventListener('click', addLogRow);
             addLogRow(); // Add one row by default
 
-            // NEW: Setup character counters
+            // Setup character counters
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
                 const counter = document.getElementById(counterId);
@@ -334,16 +330,15 @@
                     textElement.className = 'final-text';
                     textElement.textContent = value || ' ';
 
-                    // MODIFIED: Logic to correctly replace elements and their counters
+                    // MODIFIED: Simplified logic to replace elements and their counters
                     if (el.id === 'workDone' || el.id === 'techComments') {
-                        // This element is inside a wrapper div with a counter, so replace the wrapper
-                        el.parentNode.parentNode.replaceChild(textElement, el.parentNode);
+                        const counterElement = el.nextElementSibling;
+                        el.parentNode.replaceChild(textElement, el);
+                        if (counterElement) counterElement.remove();
                     } else if (el.id === 'contactName' || el.id === 'phone') {
-                        // Special handling for contact/phone to merge with label
                          el.previousElementSibling.textContent += ' ' + value;
                          el.remove();
                     } else {
-                        // Default replacement for all other inputs/selects
                         el.parentNode.replaceChild(textElement, el);
                     }
                 });
