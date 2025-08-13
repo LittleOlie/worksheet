@@ -141,7 +141,7 @@
 
             <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="750"></textarea>
+                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="900"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
@@ -163,9 +163,6 @@
                     </thead>
                     <tbody id="tech-log-body"></tbody>
                 </table>
-                <div class="text-right mt-1">
-                    <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
-                </div>
             </div>
 
             <div class="grid grid-cols-12 gap-2 mb-2">
@@ -285,7 +282,7 @@
                 canvas.width = rect.width * ratio;
                 canvas.height = rect.height * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
-                modalSignaturePad.fromData(modalSignaturePad.toData()); // Redraw signature after resize
+                modalSignaturePad.fromData(modalSignaturePad.toData()); 
             }
             
             document.querySelectorAll('.expand-signature-button').forEach(button => {
@@ -325,9 +322,6 @@
                 modalSignaturePad.clear();
             });
 
-            // --- End of Modal Logic ---
-
-
             function resizeFormCanvases() {
                 const canvases = [ownerCanvas, agcCanvas];
                 canvases.forEach(canvas => {
@@ -344,22 +338,8 @@
             resizeFormCanvases();
 
             const techLogBody = document.getElementById('tech-log-body');
-            const addLogEntryButton = document.getElementById('add-log-entry-button');
-
-            const checkLogLimit = () => {
-                if (techLogBody.rows.length >= 3) {
-                    addLogEntryButton.disabled = true;
-                    addLogEntryButton.textContent = 'Limit of 3 reached';
-                    addLogEntryButton.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    addLogEntryButton.disabled = false;
-                    addLogEntryButton.textContent = 'Add Log Entry';
-                    addLogEntryButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            };
 
             const addLogRow = (data = ['', '', '', '', '', '']) => {
-                if (techLogBody.rows.length >= 3) return;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="pr-2"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
@@ -369,10 +349,7 @@
                     <td class="pr-2"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
                     <td class="pr-2"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
-                checkLogLimit();
             };
-            
-            addLogEntryButton.addEventListener('click', () => addLogRow());
 
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -399,19 +376,32 @@
                     if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
 
                     techLogBody.innerHTML = '';
-                    if (jobData.techLog && jobData.techLog.length > 0) {
-                        jobData.techLog.forEach(logData => addLogRow(logData));
-                    } else {
-                         addLogRow();
+                    for (let i = 0; i < 3; i++) {
+                        addLogRow(jobData.techLog ? jobData.techLog[i] : undefined);
                     }
                 } else {
-                    addLogRow();
+                    for (let i = 0; i < 3; i++) {
+                        addLogRow();
+                    }
                 }
             } catch (error) {
                 console.error("Could not parse job data from URL:", error);
-                addLogRow();
+                for (let i = 0; i < 3; i++) {
+                    addLogRow();
+                }
             }
-            checkLogLimit();
+
+            // NEW: Prevent scrollbar on workDone textarea by limiting new lines
+            const workDoneTextarea = document.getElementById('workDone');
+            workDoneTextarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const lines = workDoneTextarea.value.split('\n');
+                    if (lines.length >= 18) {
+                        e.preventDefault();
+                    }
+                }
+            });
+
 
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
@@ -527,9 +517,11 @@
                 sigToImage(ownerSignaturePad, 'owner-signature-container', 'clear-owner-signature-container');
                 sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
                 document.getElementById('owner-signature-error').classList.add('hidden');
+                
+                const addLogBtn = document.getElementById('add-log-entry-button');
+                if (addLogBtn) addLogBtn.style.display = 'none';
 
                 document.getElementById('submit-button').style.display = 'none';
-                document.getElementById('add-log-entry-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
                 document.getElementById('edit-button').classList.remove('hidden');
             });
