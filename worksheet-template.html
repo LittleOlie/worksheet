@@ -139,9 +139,9 @@
             </div>
             
             <!-- Work Done / Comments Section -->
-            <div class="form-section mb-2 flex flex-col flex-grow">
+            <div class="form-section mb-2">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" maxlength="1500"></textarea>
+                <textarea id="workDone" rows="10" class="value-input" maxlength="1500"></textarea>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="2" class="value-input"></textarea>
             </div>
@@ -168,6 +168,9 @@
                 </div>
             </div>
             
+            <!-- This div will grow to push the content below it to the bottom -->
+            <div class="flex-grow"></div>
+
             <!-- Office Use Section -->
             <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
@@ -230,9 +233,10 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Footer -->
+            <div class="text-center text-xs mt-2 pt-2">AGC MARINE SOLUTIONS | Contact: +33492919608   support@agcmarine.com</div>
         </form>
-        
-        <div class="text-center text-xs mt-auto pt-2">AGC MARINE SOLUTIONS | Contact: +33492919608   support@agcmarine.com</div>
 
         <div class="pt-3" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
