@@ -134,16 +134,16 @@
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col" style="height: 85mm;">
+            <div class="form-section mb-2 flex flex-col" style="height: 95mm;">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
+                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="850"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2" style="height: 35mm;">
+            <div class="form-section mb-2" style="height: 25mm;">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -230,11 +230,14 @@
         <div class="pt-3" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
+            <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let formDataForEdit = {}; // To store form data for the edit function
+
             const ownerCanvas = document.getElementById('owner-signature-pad');
             const agcCanvas = document.getElementById('agc-signature-pad');
 
@@ -256,35 +259,70 @@
             window.addEventListener("resize", resizeCanvases);
             resizeCanvases();
 
+            const techLogBody = document.getElementById('tech-log-body');
+            const addLogEntryButton = document.getElementById('add-log-entry-button');
+
+            // NEW: Logic to limit technician log entries
+            const checkLogLimit = () => {
+                if (techLogBody.rows.length >= 3) {
+                    addLogEntryButton.disabled = true;
+                    addLogEntryButton.textContent = 'Limit of 3 reached';
+                    addLogEntryButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    addLogEntryButton.disabled = false;
+                    addLogEntryButton.textContent = 'Add Log Entry';
+                    addLogEntryButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            };
+
+            const addLogRow = (data = ['', '', '', '', '', '']) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-1"><input type="date" class="value-input log-date" value="${data[0]}"></td>
+                    <td class="p-1"><input type="text" class="value-input log-name" value="${data[1]}"></td>
+                    <td class="p-1"><input type="time" class="value-input log-start" value="${data[2]}"></td>
+                    <td class="p-1"><input type="time" class="value-input log-finish" value="${data[3]}"></td>
+                    <td class="p-1"><input type="text" class="value-input log-break" value="${data[4]}"></td>
+                    <td class="p-1"><input type="text" class="value-input log-notes" value="${data[5]}" maxlength="50"></td>`;
+                techLogBody.appendChild(row);
+                checkLogLimit();
+            };
+
+            addLogEntryButton.addEventListener('click', () => {
+                 if (techLogBody.rows.length < 3) {
+                    addLogRow();
+                }
+            });
+
+
+            // --- DATA HANDLING (EDIT AND URL PARSING) ---
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const encodedData = urlParams.get('data');
                 if (encodedData) {
                     const jobData = JSON.parse(atob(encodedData));
-                    document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
-                    document.getElementById('clientName').value = jobData.clientName || '';
-                    document.getElementById('contactName').value = jobData.contactName || '';
-                    document.getElementById('phone').value = jobData.phone || '';
-                    document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
-                    document.getElementById('work-description').value = jobData.workDescription || '';
+                    // Populate main fields
+                    Object.keys(jobData).forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                           if (id === 'portOfCallDisplay') el.textContent = jobData[id];
+                           else el.value = jobData[id];
+                        }
+                    });
+                    // Populate technician log
+                    techLogBody.innerHTML = ''; // Clear default rows
+                    jobData.techLog.forEach(logData => addLogRow(logData));
+                } else {
+                    addLogRow(); // Add one default row if no data
                 }
             } catch (error) {
                 console.error("Could not parse job data from URL:", error);
+                addLogRow(); // Add one default row on error
             }
+            checkLogLimit(); // Initial check
 
-            const techLogBody = document.getElementById('tech-log-body');
-            const addLogEntryButton = document.getElementById('add-log-entry-button');
 
-            const addLogRow = () => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input" maxlength="50"></td>`;
-                techLogBody.appendChild(row);
-            };
-
-            addLogEntryButton.addEventListener('click', addLogRow);
-            addLogRow(); // Add one row by default
-
-            // Setup character counters
+            // --- CHARACTER COUNTERS ---
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
                 const counter = document.getElementById(counterId);
@@ -295,15 +333,20 @@
                     counter.textContent = `${currentLength} / ${maxLength}`;
                 };
                 textarea.addEventListener('input', updateCounter);
-                updateCounter(); // Initial call to set value on page load
+                updateCounter();
             };
-
             setupCharacterCounter('workDone', 'workDoneCounter');
             setupCharacterCounter('techComments', 'techCommentsCounter');
 
 
+            // --- SIGNATURE AND SUBMIT ---
             document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
             document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
+
+            document.getElementById('edit-button').addEventListener('click', () => {
+                const encodedData = btoa(JSON.stringify(formDataForEdit));
+                window.location.href = window.location.pathname + '?data=' + encodedData;
+            });
 
             document.getElementById('submit-button').addEventListener('click', () => {
                 const form = document.getElementById('worksheet-form');
@@ -316,6 +359,35 @@
                     return;
                 }
                 document.getElementById('owner-signature-error').classList.add('hidden');
+
+                // NEW: Capture all form data before finalizing
+                formDataForEdit = {
+                    jobOrderNumber: document.getElementById('jobOrderNumber').value,
+                    clientName: document.getElementById('clientName').value,
+                    contactName: document.getElementById('contactName').value,
+                    phone: document.getElementById('phone').value,
+                    portOfCallDisplay: document.getElementById('portOfCallDisplay').textContent,
+                    'work-description': document.getElementById('work-description').value,
+                    workDone: document.getElementById('workDone').value,
+                    techComments: document.getElementById('techComments').value,
+                    workCompleted: document.getElementById('workCompleted').value,
+                    additionalParts: document.getElementById('additionalParts').value,
+                    nextPort: document.getElementById('nextPort').value,
+                    agcName: document.getElementById('agcName').value,
+                    agcPosition: document.getElementById('agcPosition').value,
+                    ownerName: document.getElementById('ownerName').value,
+                    ownerPosition: document.getElementById('ownerPosition').value,
+                    ownerDate: document.getElementById('ownerDate').value,
+                    techLog: Array.from(techLogBody.rows).map(row => [
+                        row.querySelector('.log-date').value,
+                        row.querySelector('.log-name').value,
+                        row.querySelector('.log-start').value,
+                        row.querySelector('.log-finish').value,
+                        row.querySelector('.log-break').value,
+                        row.querySelector('.log-notes').value,
+                    ])
+                };
+
 
                 form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
@@ -337,26 +409,25 @@
                     }
                 });
 
-                // Handle Owner Signature
-                const ownerSigUrl = ownerSignaturePad.toDataURL('image/png');
-                const ownerSigImage = document.createElement('img');
-                ownerSigImage.src = ownerSigUrl;
-                ownerSigImage.className = 'w-full h-full object-contain';
-                document.getElementById('owner-signature-container').innerHTML = '';
-                document.getElementById('owner-signature-container').appendChild(ownerSigImage);
-                document.getElementById('clear-owner-signature-container').remove();
+                // Handle Signatures
+                const sigToImage = (canvas, containerId, clearContainerId) => {
+                    const sigUrl = new SignaturePad(canvas).toDataURL('image/png');
+                    const sigImage = document.createElement('img');
+                    sigImage.src = sigUrl;
+                    sigImage.className = 'w-full h-full object-contain';
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = '';
+                    container.appendChild(sigImage);
+                    document.getElementById(clearContainerId).remove();
+                };
+                sigToImage(ownerCanvas, 'owner-signature-container', 'clear-owner-signature-container');
+                sigToImage(agcCanvas, 'agc-signature-container', 'clear-agc-signature-container');
+                document.getElementById('owner-signature-error').classList.add('hidden');
 
-                // Handle AGC Signature
-                const agcSigUrl = agcSignaturePad.toDataURL('image/png');
-                const agcSigImage = document.createElement('img');
-                agcSigImage.src = agcSigUrl;
-                agcSigImage.className = 'w-full h-full object-contain';
-                document.getElementById('agc-signature-container').innerHTML = '';
-                document.getElementById('agc-signature-container').appendChild(agcSigImage);
-                document.getElementById('clear-agc-signature-container').remove();
 
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
+                document.getElementById('edit-button').classList.remove('hidden');
             });
 
             document.getElementById('print-button').addEventListener('click', () => window.print());
