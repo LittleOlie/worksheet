@@ -6,6 +6,7 @@
     <title>Job Sheet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -20,7 +21,7 @@
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
             padding: 1cm;
-            min-height: 297mm; /* Fixed A4 height for editing and final */
+            min-height: 297mm; /* Fixed A4 height */
         }
         .page.is-finalized {
             height: 297mm;
@@ -100,7 +101,7 @@
             .page:last-child {
                 page-break-after: auto;
             }
-            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn { display: none !important; }
+            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn { display: none !important; }
             .hidden { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
@@ -264,9 +265,9 @@
                 <tbody id="parts-list-body">
                     </tbody>
             </table>
-        </div>
-        <div class="mt-4 text-right">
-            <button type="button" id="add-part-btn" class="add-part-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Part</button>
+            <div class="mt-4 text-right">
+                <button type="button" id="add-part-btn" class="add-part-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Part</button>
+            </div>
         </div>
     </div>
 
@@ -293,10 +294,10 @@
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
             <div class="p-4 border-b flex justify-between items-center">
                 <h3 class="text-lg font-medium">Scan Barcode</h3>
-                <button type="button" id="scanner-close-button" class="text-gray-400 hover:text-gray-600">&times;</button>
+                <button type="button" id="scanner-close-button" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
             </div>
             <div class="p-4">
-                <video id="scanner-video" class="w-full h-auto border bg-black"></video>
+                 <div id="scanner-container" class="w-full h-auto border bg-black rounded"></div>
                 <div id="scanner-error" class="text-red-500 text-sm mt-2 hidden"></div>
             </div>
         </div>
@@ -307,68 +308,50 @@
     document.addEventListener('DOMContentLoaded', () => {
         let formDataForEdit = {};
         let currentScanTargetInput = null;
-        let videoStream = null;
+        
+        // --- Barcode Scanner Logic (using html5-qrcode library) ---
+        const scannerModal = document.getElementById('scanner-modal');
+        const scannerError = document.getElementById('scanner-error');
+        const html5QrCode = new Html5Qrcode("scanner-container");
 
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            if (currentScanTargetInput) {
+                currentScanTargetInput.value = decodedText;
+            }
+            stopScanner();
+        };
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        function startScanner(targetInput) {
+            currentScanTargetInput = targetInput;
+            scannerModal.classList.remove('hidden');
+            scannerError.classList.add('hidden');
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                .catch(err => {
+                    scannerError.textContent = "Unable to start camera. Please grant permission and try again.";
+                    scannerError.classList.remove('hidden');
+                    console.error("Scanner start error:", err);
+                });
+        }
+        
+        function stopScanner() {
+            html5QrCode.stop().then(ignore => {
+                scannerModal.classList.add('hidden');
+                currentScanTargetInput = null;
+            }).catch(err => {
+                console.error("Scanner stop error:", err);
+                scannerModal.classList.add('hidden');
+            });
+        }
+        
+        document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
+
+        // --- Signature Pad Logic ---
         const ownerCanvas = document.getElementById('owner-signature-pad');
         const agcCanvas = document.getElementById('agc-signature-pad');
         const ownerSignaturePad = new SignaturePad(ownerCanvas);
         const agcSignaturePad = new SignaturePad(agcCanvas);
-        
-        // --- Barcode Scanner Logic ---
-        const scannerModal = document.getElementById('scanner-modal');
-        const scannerVideo = document.getElementById('scanner-video');
-        const scannerError = document.getElementById('scanner-error');
-
-        async function startScanner() {
-            if (!('BarcodeDetector' in window)) {
-                scannerError.textContent = 'Barcode Detector is not supported by this browser.';
-                scannerError.classList.remove('hidden');
-                return;
-            }
-            scannerError.classList.add('hidden');
-            
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                scannerVideo.srcObject = videoStream;
-                await scannerVideo.play();
-                scannerModal.classList.remove('hidden');
-                
-                const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'code_39', 'codabar', 'ean_8', 'qr_code'] });
-
-                const detectBarcode = async () => {
-                    try {
-                        const barcodes = await barcodeDetector.detect(scannerVideo);
-                        if (barcodes.length > 0) {
-                            if (currentScanTargetInput) {
-                                currentScanTargetInput.value = barcodes[0].rawValue;
-                            }
-                            stopScanner();
-                        } else if (!scannerModal.classList.contains('hidden')) {
-                            requestAnimationFrame(detectBarcode);
-                        }
-                    } catch (e) {
-                        console.error('Barcode detection failed:', e);
-                        scannerError.textContent = 'Could not detect barcode. Please try again.';
-                        scannerError.classList.remove('hidden');
-                    }
-                };
-                detectBarcode();
-
-            } catch (err) {
-                console.error('Camera access error:', err);
-                scannerError.textContent = 'Could not access camera. Please check permissions.';
-                scannerError.classList.remove('hidden');
-            }
-        }
-
-        function stopScanner() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-            scannerModal.classList.add('hidden');
-        }
-
-        document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
 
         // --- Parts Page Logic ---
         const additionalPartsSelect = document.getElementById('additionalParts');
@@ -380,45 +363,51 @@
             if (additionalPartsSelect.value === 'Yes') {
                 partsPage.classList.remove('hidden');
                 if (partsListBody.children.length === 0) {
-                    addPartRow(); // Add one row by default
+                    addPartRow();
                 }
             } else {
                 partsPage.classList.add('hidden');
             }
         });
 
-        function addPartRow(data = ['', '', '']) {
+        function addPartRow(data = ['', 1, '']) {
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
-            const partId = `part-${Date.now()}`;
+            
+            // Create quantity dropdown
+            let quantityOptions = '';
+            for (let i = 1; i <= 50; i++) {
+                quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`;
+            }
+            const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`;
+
             row.innerHTML = `
                 <td class="pr-2 py-1">
                     <div class="flex items-center">
                         <input type="text" class="value-input part-number py-1" value="${data[0]}">
-                        <button type="button" data-target="${partId}" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 0 01-1-1v-2zM3 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm7-10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm3 10a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zM9 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clip-rule="evenodd" /></svg>
+                        <button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 0 01-1-1v-2zM3 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm7-10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm3 10a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zM9 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
                 </td>
-                <td class="pr-2 py-1"><input type="number" class="value-input part-quantity py-1" value="${data[1]}"></td>
+                <td class="pr-2 py-1">${quantitySelect}</td>
                 <td class="pr-2 py-1"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td>
-                <td class="text-center"><button type="button" class="remove-part-btn text-red-500 hover:text-red-700">&times;</button></td>
+                <td class="text-center"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
             `;
-            row.querySelector('.part-number').id = partId;
             partsListBody.appendChild(row);
         }
         
         addPartBtn.addEventListener('click', () => addPartRow());
         
         partsListBody.addEventListener('click', (e) => {
-            if (e.target.closest('.remove-part-btn')) {
-                e.target.closest('tr').remove();
+            const removeBtn = e.target.closest('.remove-part-btn');
+            if (removeBtn) {
+                removeBtn.closest('tr').remove();
             }
             const scanButton = e.target.closest('.scan-part-btn');
             if (scanButton) {
-                const targetInputId = scanButton.dataset.target;
-                currentScanTargetInput = document.getElementById(targetInputId);
-                startScanner();
+                const targetInput = scanButton.closest('td').querySelector('.part-number');
+                startScanner(targetInput);
             }
         });
 
@@ -622,8 +611,7 @@
             };
 
             // Convert all inputs to static text for printing
-            document.querySelectorAll('input, textarea, select').forEach(el => {
-                if (el.closest('#parts-page')) return; // Skip parts page inputs for now
+            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => {
                 let value = el.value;
                 if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
                 const textElement = document.createElement('div');
@@ -655,9 +643,11 @@
 
             // Convert parts list table inputs
             Array.from(partsListBody.rows).forEach(row => {
-                row.querySelectorAll('input').forEach(input => {
+                row.querySelectorAll('input, select').forEach(input => {
+                    let value = input.value;
+                     if (input.tagName === 'SELECT') value = input.options[input.selectedIndex].text;
                     const cell = input.closest('td');
-                    cell.textContent = input.value || ' ';
+                    cell.textContent = value || ' ';
                     cell.classList.add('final-text');
                 });
                 row.querySelector('.remove-part-btn')?.parentElement.remove();
@@ -683,9 +673,13 @@
             sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
             
             document.getElementById('owner-signature-error').classList.add('hidden');
-            document.getElementById('controls').style.display = 'none'; // Hide main controls container
-            document.body.classList.remove('bg-gray-200'); // Clean background for printing
-            window.print(); // Trigger print dialog
+            document.getElementById('controls').remove();
+            document.body.classList.remove('bg-gray-200');
+
+            // Timeout allows DOM to update before printing
+            setTimeout(() => {
+                window.print();
+            }, 100);
         });
     });
     </script>
