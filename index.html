@@ -28,19 +28,19 @@
         <div id="setup-form" class="space-y-4">
             <div>
                 <label for="jobOrderNumber" class="block text-sm font-medium text-gray-700">Job order number</label>
-                <input type="text" id="jobOrderNumber" value="01257-02" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                <input type="text" id="jobOrderNumber" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
             </div>
             <div>
                 <label for="clientName" class="block text-sm font-medium text-gray-700">Boat name / Client name</label>
-                <input type="text" id="clientName" value="MY-ALP" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                <input type="text" id="clientName" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
             </div>
             <div>
                 <label for="contactName" class="block text-sm font-medium text-gray-700">Contact</label>
-                <input type="text" id="contactName" value="GIANLUCA" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                <input type="text" id="contactName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
             </div>
             <div>
                 <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                <input type="tel" id="phone" value="+39 335 602 3201" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                <input type="tel" id="phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
             </div>
             <div>
                 <label for="portOfCall" class="block text-sm font-medium text-gray-700">Port of call / Place of work</label>
@@ -48,7 +48,7 @@
             </div>
             <div>
                 <label for="workDescription" class="block text-sm font-medium text-gray-700">Work Description</label>
-                <textarea id="workDescription" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">INSTALLATION OF BASIC TOWPRO SYSTEM ON TENDER AND IN YACHT BRIDGE</textarea>
+                <textarea id="workDescription" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm"></textarea>
             </div>
 
             <div class="pt-4">
@@ -65,9 +65,12 @@
             <div class="mt-4 p-3 bg-gray-100 rounded-md">
                 <input type="text" id="generated-url" readonly class="w-full p-2 border-gray-300 rounded-md bg-white text-sm">
             </div>
-            <div class="mt-2 text-right">
+            <div class="mt-2 flex justify-end space-x-2">
                 <button type="button" id="copy-link-button" class="text-sm font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm">
                     Copy Link
+                </button>
+                 <button type="button" id="open-link-button" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-md shadow-sm">
+                    Open Link
                 </button>
             </div>
         </div>
@@ -90,7 +93,6 @@
             const encodedData = btoa(dataString);
 
             // 3. Construct the full URL robustly
-            // This new logic works correctly on local files and on servers like Vercel.
             const currentUrl = window.location.href;
             const worksheetUrl = new URL('worksheet-template.html', currentUrl);
             worksheetUrl.searchParams.set('data', encodedData);
@@ -110,6 +112,13 @@
             generatedUrlInput.select();
             document.execCommand('copy');
             alert('Link copied to clipboard!');
+        });
+
+        document.getElementById('open-link-button').addEventListener('click', () => {
+            const url = document.getElementById('generated-url').value;
+            if (url) {
+                window.open(url, '_blank');
+            }
         });
     </script>
 
