@@ -106,16 +106,16 @@
         <form id="worksheet-form" class="flex flex-col h-full">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
-                    <div class="form-section" style="height: 20mm;">
+                    <div class="form-section" style="height: 15mm;">
                         <div class="label-text">Job order number</div>
                         <input type="text" id="jobOrderNumber" readonly class="value-input">
                     </div>
-                    <div class="form-section" style="height: 20mm;">
+                    <div class="form-section" style="height: 15mm;">
                         <div class="label-text">Port of call / Place of work</div>
                         <div id="portOfCallDisplay" class="final-text"></div>
                     </div>
                 </div>
-                <div class="form-section" style="height: 40mm;">
+                <div class="form-section" style="height: 30mm;">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
                     <div class="mt-2">
@@ -129,12 +129,12 @@
                 </div>
             </div>
 
-            <div class="form-section mb-2" style="height: 25mm;">
+            <div class="form-section mb-2" style="height: 20mm;">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col" style="height: 70mm;">
+            <div class="form-section mb-2 flex flex-col" style="height: 85mm;">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
@@ -186,7 +186,7 @@
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <div class="grid grid-cols-2 gap-2">
-                <div class="form-section" style="height: 60mm;">
+                <div class="form-section flex flex-col" style="height: 60mm;">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
