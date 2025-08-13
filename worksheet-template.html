@@ -19,7 +19,7 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            min-height: 297mm; /* Always maintain A4 height */
+            min-height: 297mm; /* Always maintain A4 height for screen view */
             padding: 1cm;
         }
         .label-text {
@@ -66,24 +66,27 @@
         @media print {
             @page {
                 size: A4;
-                margin: 0.5cm; /* Add some margin for printing */
+                margin: 0.5cm; /* Margin for the printed page */
             }
             body, .page {
                 margin: 0;
                 box-shadow: none;
                 background: white;
                 width: 100%;
-                height: 100vh; /* Use viewport height for printing */
-                overflow: hidden; /* Prevents creating a blank second page */
+                /* FIX: Remove fixed heights and hidden overflow to allow content to flow across pages */
+                min-height: initial;
+                height: auto;
+                overflow: visible;
             }
             #controls, #add-log-entry-button { display: none !important; }
-            
+
             /* PDF/Print layout: apply the boxes */
             .form-section {
                 border: 1px solid black !important;
                 background-color: white !important;
                 border-radius: 0 !important;
                 padding: 0.25rem 0.5rem !important; /* Tighter padding for print */
+                page-break-inside: avoid; /* Try to keep sections from breaking across pages */
             }
             .value-input {
                 border: none !important;
@@ -128,12 +131,12 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
             </div>
-            
+
             <div class="form-section mb-2 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input flex-grow" maxlength="1500"></textarea>
@@ -161,7 +164,7 @@
                     <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
                 </div>
             </div>
-            
+
             <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
@@ -225,7 +228,7 @@
                 </div>
             </div>
         </form>
-        
+
         <div class="pt-3 mt-auto" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
@@ -236,7 +239,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ownerCanvas = document.getElementById('owner-signature-pad');
             const agcCanvas = document.getElementById('agc-signature-pad');
-            
+
             const ownerSignaturePad = new SignaturePad(ownerCanvas, { penColor: "rgb(0, 0, 0)" });
             const agcSignaturePad = new SignaturePad(agcCanvas, { penColor: "rgb(0, 0, 0)" });
 
@@ -302,7 +305,7 @@
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
                     const textElement = document.createElement('div');
-                    
+
                     // Auto-resize logic for 'workDone' field
                     if (el.id === 'workDone' && value.length > 800) {
                         textElement.className = 'final-text final-text-small';
@@ -311,7 +314,7 @@
                     }
 
                     textElement.textContent = value || ' ';
-                    
+
                     if(el.id === 'contactName' || el.id === 'phone'){
                          el.previousElementSibling.textContent += ' ' + value;
                          el.remove();
@@ -332,7 +335,7 @@
                 // Handle AGC Signature
                 const agcSigUrl = agcSignaturePad.toDataURL('image/png');
                 const agcSigImage = document.createElement('img');
-                agcSigImage.src = agcSigUrl;
+agcSigImage.src = agcSigUrl;
                 agcSigImage.className = 'w-full h-full object-contain';
                 document.getElementById('agc-signature-container').innerHTML = '';
                 document.getElementById('agc-signature-container').appendChild(agcSigImage);
