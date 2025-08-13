@@ -19,13 +19,8 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            min-height: 297mm; /* Set min-height for on-screen form view */
+            min-height: 297mm; /* Always maintain A4 height */
             padding: 1cm;
-            transition: min-height 0.3s ease-in-out; /* Smooth transition */
-        }
-        .page.fit-content {
-            min-height: 0; /* Remove min-height for the final report view */
-            height: auto;
         }
         .label-text {
             font-size: 0.7rem;
@@ -78,7 +73,7 @@
                 box-shadow: none;
                 background: white;
                 width: 100%;
-                height: 100%;
+                height: 100vh; /* Use viewport height for printing */
                 overflow: hidden; /* Prevents creating a blank second page */
             }
             #controls, #add-log-entry-button { display: none !important; }
@@ -108,7 +103,7 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex-grow">
+        <form id="worksheet-form" class="flex-grow flex flex-col">
             <!-- Header Section -->
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <!-- Left Column -->
@@ -144,9 +139,9 @@
             </div>
             
             <!-- Work Done / Comments Section -->
-            <div class="form-section mb-2">
+            <div class="form-section mb-2 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" rows="10" class="value-input" maxlength="1500"></textarea>
+                <textarea id="workDone" class="value-input flex-grow" maxlength="1500"></textarea>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="2" class="value-input"></textarea>
             </div>
@@ -350,9 +345,6 @@
                 document.getElementById('agc-signature-container').innerHTML = '';
                 document.getElementById('agc-signature-container').appendChild(agcSigImage);
                 document.getElementById('clear-agc-signature-container').remove();
-
-                // Shrink page to fit content
-                document.querySelector('.page').classList.add('fit-content');
 
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
