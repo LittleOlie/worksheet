@@ -14,13 +14,17 @@
         }
         .page {
             background: white;
-            display: flex; /* Use flexbox for layout */
-            flex-direction: column; /* Stack children vertically */
+            display: flex;
+            flex-direction: column;
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            height: 297mm; /* Use fixed height for screen view as well */
-            padding: 1cm;
+            /* MODIFIED: Removed fixed height for editing view. It will now grow naturally. */
+            min-height: 90vh;
+        }
+        /* NEW: This class applies the A4 height only when the form is finalized */
+        .page.is-finalized {
+            height: 297mm;
         }
         .label-text {
             font-size: 0.7rem;
@@ -103,19 +107,19 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex flex-col h-full">
+        <form id="worksheet-form" class="flex flex-col flex-grow">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
-                    <div class="form-section" style="height: 15mm;">
+                    <div class="form-section">
                         <div class="label-text">Job order number</div>
                         <input type="text" id="jobOrderNumber" readonly class="value-input">
                     </div>
-                    <div class="form-section" style="height: 15mm;">
+                    <div class="form-section">
                         <div class="label-text">Port of call / Place of work</div>
                         <div id="portOfCallDisplay" class="final-text"></div>
                     </div>
                 </div>
-                <div class="form-section" style="height: 30mm;">
+                <div class="form-section">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
                     <div class="mt-2">
@@ -129,12 +133,12 @@
                 </div>
             </div>
 
-            <div class="form-section mb-2" style="height: 20mm;">
+            <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col" style="height: 85mm;">
+            <div class="form-section mb-2 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
@@ -143,7 +147,7 @@
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2" style="height: 35mm;">
+            <div class="form-section mb-2">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -164,7 +168,7 @@
             </div>
 
             <div class="grid grid-cols-12 gap-2 mb-2">
-                <div class="col-span-8 form-section" style="height: 20mm;">
+                <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
@@ -177,7 +181,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-span-4 form-section" style="height: 20mm;">
+                <div class="col-span-4 form-section">
                     <div class="label-text">Next port of call</div>
                     <input type="text" id="nextPort" class="value-input">
                 </div>
@@ -186,7 +190,7 @@
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <div class="grid grid-cols-2 gap-2">
-                <div class="form-section flex flex-col" style="height: 60mm;">
+                <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -205,7 +209,7 @@
                         <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
-                <div class="form-section flex flex-col" style="height: 60mm;">
+                <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
                      <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -236,7 +240,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let formDataForEdit = {}; // To store form data for the edit function
+            let formDataForEdit = {};
 
             const ownerCanvas = document.getElementById('owner-signature-pad');
             const agcCanvas = document.getElementById('agc-signature-pad');
@@ -262,7 +266,6 @@
             const techLogBody = document.getElementById('tech-log-body');
             const addLogEntryButton = document.getElementById('add-log-entry-button');
 
-            // Logic to limit technician log entries
             const checkLogLimit = () => {
                 if (techLogBody.rows.length >= 3) {
                     addLogEntryButton.disabled = true;
@@ -276,7 +279,7 @@
             };
 
             const addLogRow = (data = ['', '', '', '', '', '']) => {
-                if (techLogBody.rows.length >= 3) return; // Failsafe
+                if (techLogBody.rows.length >= 3) return;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="p-1"><input type="date" class="value-input log-date" value="${data[0]}"></td>
@@ -291,14 +294,11 @@
 
             addLogEntryButton.addEventListener('click', addLogRow);
 
-
-            // --- DATA HANDLING (EDIT AND URL PARSING) ---
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const encodedData = urlParams.get('data');
                 if (encodedData) {
                     const jobData = JSON.parse(atob(encodedData));
-                    // Populate main fields
                     Object.keys(jobData).forEach(id => {
                         const el = document.getElementById(id);
                         if (el) {
@@ -306,32 +306,27 @@
                            else el.value = jobData[id];
                         }
                     });
-                    // Populate technician log
-                    techLogBody.innerHTML = ''; // Clear default rows
+                    techLogBody.innerHTML = '';
                     if (jobData.techLog && jobData.techLog.length > 0) {
                         jobData.techLog.forEach(logData => addLogRow(logData));
                     } else {
-                         addLogRow(); // Add one default if log was empty
+                         addLogRow();
                     }
                 } else {
-                    addLogRow(); // Add one default row if no data
+                    addLogRow();
                 }
             } catch (error) {
                 console.error("Could not parse job data from URL:", error);
-                addLogRow(); // Add one default row on error
+                addLogRow();
             }
-            checkLogLimit(); // Initial check
+            checkLogLimit();
 
-
-            // --- CHARACTER COUNTERS ---
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
                 const counter = document.getElementById(counterId);
                 const maxLength = textarea.maxLength;
-
                 const updateCounter = () => {
-                    const currentLength = textarea.value.length;
-                    counter.textContent = `${currentLength} / ${maxLength}`;
+                    counter.textContent = `${textarea.value.length} / ${maxLength}`;
                 };
                 textarea.addEventListener('input', updateCounter);
                 updateCounter();
@@ -339,8 +334,6 @@
             setupCharacterCounter('workDone', 'workDoneCounter');
             setupCharacterCounter('techComments', 'techCommentsCounter');
 
-
-            // --- SIGNATURE AND SUBMIT ---
             document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
             document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
 
@@ -361,7 +354,9 @@
                 }
                 document.getElementById('owner-signature-error').classList.add('hidden');
 
-                // Capture all form data before finalizing
+                // NEW: Apply the A4 format class on finalize
+                document.querySelector('.page').classList.add('is-finalized');
+
                 formDataForEdit = {
                     jobOrderNumber: document.getElementById('jobOrderNumber').value,
                     clientName: document.getElementById('clientName').value,
@@ -389,15 +384,12 @@
                     ])
                 };
 
-
                 form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
-                    
                     const textElement = document.createElement('div');
                     textElement.className = 'final-text';
                     textElement.textContent = value || ' ';
-
                     if (el.id === 'workDone' || el.id === 'techComments') {
                         const counterElement = el.nextElementSibling;
                         el.parentNode.replaceChild(textElement, el);
@@ -410,7 +402,6 @@
                     }
                 });
                 
-                // Finalize Tech Log
                 Array.from(techLogBody.rows).forEach(row => {
                     Array.from(row.cells).forEach(cell => {
                         const input = cell.querySelector('input');
@@ -421,8 +412,6 @@
                     });
                 });
 
-
-                // Handle Signatures
                 const sigToImage = (canvas, containerId, clearContainerId) => {
                     const sigUrl = new SignaturePad(canvas).toDataURL('image/png');
                     const sigImage = document.createElement('img');
@@ -437,7 +426,6 @@
                 sigToImage(ownerCanvas, 'owner-signature-container', 'clear-owner-signature-container');
                 sigToImage(agcCanvas, 'agc-signature-container', 'clear-agc-signature-container');
                 document.getElementById('owner-signature-error').classList.add('hidden');
-
 
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('add-log-entry-button').style.display = 'none';
