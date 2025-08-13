@@ -19,10 +19,8 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            /* MODIFIED: Removed fixed height for editing view. It will now grow naturally. */
             min-height: 90vh;
         }
-        /* NEW: This class applies the A4 height only when the form is finalized */
         .page.is-finalized {
             height: 297mm;
         }
@@ -107,21 +105,21 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex flex-col flex-grow">
-            <div class="grid grid-cols-2 gap-2 mb-2">
-                <div class="flex flex-col gap-2">
-                    <div class="form-section">
+        <form id="worksheet-form" class="flex flex-col flex-grow p-6">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="flex flex-col gap-4">
+                    <div class="form-section p-4">
                         <div class="label-text">Job order number</div>
-                        <input type="text" id="jobOrderNumber" readonly class="value-input">
+                        <input type="text" id="jobOrderNumber" readonly class="value-input mt-1">
                     </div>
-                    <div class="form-section">
+                    <div class="form-section p-4">
                         <div class="label-text">Port of call / Place of work</div>
-                        <div id="portOfCallDisplay" class="final-text"></div>
+                        <div id="portOfCallDisplay" class="final-text mt-1"></div>
                     </div>
                 </div>
-                <div class="form-section">
+                <div class="form-section p-4">
                     <div class="label-text">Boat name / Client name</div>
-                    <input type="text" id="clientName" readonly class="value-input">
+                    <input type="text" id="clientName" readonly class="value-input mt-1">
                     <div class="mt-2">
                         <span class="label-text">Contact: </span>
                         <input type="text" id="contactName" readonly class="value-input inline w-auto">
@@ -133,44 +131,44 @@
                 </div>
             </div>
 
-            <div class="form-section mb-2">
+            <div class="form-section p-4 mb-4">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col flex-grow">
+            <div class="form-section p-4 mb-4 flex flex-col flex-grow">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
+                <textarea id="workDone" class="value-input flex-grow mt-1" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
-                <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
+                <textarea id="techComments" rows="3" class="value-input mt-1" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2">
+            <div class="form-section p-4 mb-4">
                  <div class="label-text mb-1">Technician Log</div>
-                <table class="w-full text-left">
+                <table class="w-full text-left mt-2">
                     <thead>
                         <tr class="border-b">
-                            <th class="p-1 label-text">Date attented</th>
-                            <th class="p-1 label-text">Name</th>
-                            <th class="p-1 label-text">Start time</th>
-                            <th class="p-1 label-text">Finish time</th>
-                            <th class="p-1 label-text">Break time</th>
-                            <th class="p-1 label-text">Notes</th>
+                            <th class="pb-1 label-text">Date attended</th>
+                            <th class="pb-1 label-text">Name</th>
+                            <th class="pb-1 label-text">Start time</th>
+                            <th class="pb-1 label-text">Finish time</th>
+                            <th class="pb-1 label-text">Break time</th>
+                            <th class="pb-1 label-text">Notes</th>
                         </tr>
                     </thead>
                     <tbody id="tech-log-body"></tbody>
                 </table>
-                <div class="text-right mt-1">
+                <div class="text-right mt-2">
                     <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-12 gap-2 mb-2">
-                <div class="col-span-8 form-section">
+            <div class="grid grid-cols-12 gap-4 mb-4">
+                <div class="col-span-8 form-section p-4">
                     <div class="label-text">For office use only</div>
-                    <div class="flex space-x-4 mt-1">
+                    <div class="flex space-x-4 mt-2">
                         <div class="flex items-center space-x-2">
                             <label class="label-text">Work completed</label>
                             <select id="workCompleted" class="value-input"><option>Yes</option><option>No</option></select>
@@ -181,48 +179,48 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-span-4 form-section">
+                <div class="col-span-4 form-section p-4">
                     <div class="label-text">Next port of call</div>
-                    <input type="text" id="nextPort" class="value-input">
+                    <input type="text" id="nextPort" class="value-input mt-1">
                 </div>
             </div>
 
-            <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
+            <p class="text-center text-xs italic mt-auto mb-2">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
-            <div class="grid grid-cols-2 gap-2">
-                <div class="form-section flex flex-col">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-section p-4 flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
-                            <input type="text" id="agcName" class="value-input">
+                            <input type="text" id="agcName" class="value-input mt-1">
                             <label class="label-text mt-2 block">Position</label>
-                            <input type="text" id="agcPosition" class="value-input">
+                            <input type="text" id="agcPosition" class="value-input mt-1">
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-20 rounded-md border border-gray-300 mt-1"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
                     </div>
-                    <div class="text-xs mt-auto">
+                    <div class="text-xs mt-auto pt-2">
                         <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
-                <div class="form-section flex flex-col">
+                <div class="form-section p-4 flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
-                     <div class="grid grid-cols-2 gap-2">
+                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
-                            <input type="text" id="ownerName" required class="value-input">
+                            <input type="text" id="ownerName" required class="value-input mt-1">
                             <label class="label-text mt-2 block">Position</label>
-                            <input type="text" id="ownerPosition" required class="value-input">
+                            <input type="text" id="ownerPosition" required class="value-input mt-1">
                             <label class="label-text mt-2 block">Date</label>
-                            <input type="date" id="ownerDate" required class="value-input">
+                            <input type="date" id="ownerDate" required class="value-input mt-1">
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-20 rounded-md border border-gray-300 mt-1"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
@@ -231,7 +229,7 @@
             </div>
         </form>
 
-        <div class="pt-3" id="controls">
+        <div class="p-6 bg-white" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
             <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
@@ -281,13 +279,14 @@
             const addLogRow = (data = ['', '', '', '', '', '']) => {
                 if (techLogBody.rows.length >= 3) return;
                 const row = document.createElement('tr');
+                // MODIFIED: Removed padding from cells and reduced padding in inputs for a compact view
                 row.innerHTML = `
-                    <td class="p-1"><input type="date" class="value-input log-date" value="${data[0]}"></td>
-                    <td class="p-1"><input type="text" class="value-input log-name" value="${data[1]}"></td>
-                    <td class="p-1"><input type="time" class="value-input log-start" value="${data[2]}"></td>
-                    <td class="p-1"><input type="time" class="value-input log-finish" value="${data[3]}"></td>
-                    <td class="p-1"><input type="text" class="value-input log-break" value="${data[4]}"></td>
-                    <td class="p-1"><input type="text" class="value-input log-notes" value="${data[5]}" maxlength="50"></td>`;
+                    <td class="pr-2"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
+                    <td class="pr-2"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
+                    <td class="pr-2"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
+                    <td class="pr-2"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
+                    <td class="pr-2"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
+                    <td class="pr-2"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
                 checkLogLimit();
             };
@@ -324,6 +323,7 @@
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
                 const counter = document.getElementById(counterId);
+                if (!textarea || !counter) return;
                 const maxLength = textarea.maxLength;
                 const updateCounter = () => {
                     counter.textContent = `${textarea.value.length} / ${maxLength}`;
@@ -354,7 +354,6 @@
                 }
                 document.getElementById('owner-signature-error').classList.add('hidden');
 
-                // NEW: Apply the A4 format class on finalize
                 document.querySelector('.page').classList.add('is-finalized');
 
                 formDataForEdit = {
@@ -407,12 +406,13 @@
                         const input = cell.querySelector('input');
                         if (input) {
                             cell.textContent = input.value;
-                            cell.classList.add('p-1', 'final-text');
+                            cell.classList.add('final-text');
                         }
                     });
                 });
 
                 const sigToImage = (canvas, containerId, clearContainerId) => {
+                    if (!canvas || !document.getElementById(containerId)) return;
                     const sigUrl = new SignaturePad(canvas).toDataURL('image/png');
                     const sigImage = document.createElement('img');
                     sigImage.src = sigUrl;
