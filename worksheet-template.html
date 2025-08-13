@@ -51,6 +51,9 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .final-text-small {
+            font-size: 0.7rem; /* Smaller font for long text */
+        }
         /* On-screen layout: clean cards */
         .form-section {
             background-color: #f9fafb;
@@ -70,6 +73,7 @@
                 background: white;
                 width: 100%;
                 height: 100%;
+                overflow: hidden; /* Prevents creating a blank second page */
             }
             #controls, #add-log-entry-button { display: none !important; }
             
@@ -136,7 +140,7 @@
             <!-- Work Done / Comments Section -->
             <div class="form-section mb-2">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" rows="10" class="value-input" maxlength="1200"></textarea>
+                <textarea id="workDone" rows="10" class="value-input" maxlength="1500"></textarea>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="2" class="value-input"></textarea>
             </div>
@@ -190,25 +194,39 @@
             <!-- Signature Section -->
             <div class="grid grid-cols-2 gap-2">
                 <div class="form-section">
-                    <div class="label-text font-bold">For and on behalf of AGC Marine Solutions</div>
-                    <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="agcName" class="value-input"></div>
-                    <div class="mt-2"><label class="label-text">Position</label><input type="text" id="agcPosition" class="value-input"></div>
-                    <div class="mt-2">
-                        <label class="label-text">Signature</label>
-                        <div id="agc-signature-container" class="h-12 rounded-md"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
-                        <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
+                    <div class="label-text font-bold mb-2">For and on behalf of AGC Marine Solutions</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="label-text">Name (In capital letters)</label>
+                            <input type="text" id="agcName" class="value-input">
+                            <label class="label-text mt-2 block">Position</label>
+                            <input type="text" id="agcPosition" class="value-input">
+                        </div>
+                        <div>
+                            <label class="label-text">Signature</label>
+                            <div id="agc-signature-container" class="h-18 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-section">
-                    <div class="label-text font-bold">For and on behalf of the owner</div>
-                    <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="ownerName" required class="value-input"></div>
-                    <div class="mt-2"><label class="label-text">Position</label><input type="text" id="ownerPosition" required class="value-input"></div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <div><label class="label-text">Signature</label><div id="owner-signature-container" class="h-12 rounded-md"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div></div>
-                        <div><label class="label-text">Date</label><input type="date" id="ownerDate" required class="value-input"></div>
+                    <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
+                     <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="label-text">Name (In capital letters)</label>
+                            <input type="text" id="ownerName" required class="value-input">
+                            <label class="label-text mt-2 block">Position</label>
+                            <input type="text" id="ownerPosition" required class="value-input">
+                            <label class="label-text mt-2 block">Date</label>
+                            <input type="date" id="ownerDate" required class="value-input">
+                        </div>
+                        <div>
+                            <label class="label-text">Signature</label>
+                            <div id="owner-signature-container" class="h-18 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                             <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
+                             <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
+                        </div>
                     </div>
-                    <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
-                    <div id="clear-owner-signature-container" class="text-right"><button type="button" id="clear-owner-signature" class="text-xs text-blue-600">Clear</button></div>
                 </div>
             </div>
             
@@ -291,7 +309,14 @@
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
                     const textElement = document.createElement('div');
-                    textElement.className = 'final-text';
+                    
+                    // Auto-resize logic for 'workDone' field
+                    if (el.id === 'workDone' && value.length > 800) {
+                        textElement.className = 'final-text final-text-small';
+                    } else {
+                        textElement.className = 'final-text';
+                    }
+
                     textElement.textContent = value || ' ';
                     
                     if(el.id === 'contactName' || el.id === 'phone'){
@@ -306,7 +331,7 @@
                 const ownerSigUrl = ownerSignaturePad.toDataURL('image/png');
                 const ownerSigImage = document.createElement('img');
                 ownerSigImage.src = ownerSigUrl;
-                ownerSigImage.className = 'w-full h-12 object-contain';
+                ownerSigImage.className = 'w-full h-full object-contain';
                 document.getElementById('owner-signature-container').innerHTML = '';
                 document.getElementById('owner-signature-container').appendChild(ownerSigImage);
                 document.getElementById('clear-owner-signature-container').remove();
@@ -315,7 +340,7 @@
                 const agcSigUrl = agcSignaturePad.toDataURL('image/png');
                 const agcSigImage = document.createElement('img');
                 agcSigImage.src = agcSigUrl;
-                agcSigImage.className = 'w-full h-12 object-contain';
+                agcSigImage.className = 'w-full h-full object-contain';
                 document.getElementById('agc-signature-container').innerHTML = '';
                 document.getElementById('agc-signature-container').appendChild(agcSigImage);
                 document.getElementById('clear-agc-signature-container').remove();
