@@ -6,8 +6,6 @@
     <title>Job Sheet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <!-- Barcode Scanning Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/zxing.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -55,7 +53,6 @@
             padding: 1px 0;
             white-space: pre-wrap;
             word-break: break-word;
-            min-height: 20px;
         }
         .form-section {
             background-color: #f9fafb;
@@ -84,12 +81,8 @@
                 overflow: hidden;
                 padding: 0.5cm;
                 border-radius: 0;
-                page-break-after: always;
             }
-             .page:last-child {
-                page-break-after: auto;
-            }
-            #controls, #add-log-entry-button, .expand-signature-button, .scan-barcode-button, #add-part-button { display: none !important; }
+            #controls, #add-log-entry-button, .expand-signature-button { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
                 background-color: white !important;
@@ -114,9 +107,8 @@
 </head>
 <body>
 
-    <div class="page" id="main-page">
+    <div class="page">
         <form id="worksheet-form" class="flex flex-col h-full">
-            <!-- Header Section -->
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
@@ -142,23 +134,20 @@
                 </div>
             </div>
 
-            <!-- Work To Do Section -->
             <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <!-- Work Done / Comments Section -->
             <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="900"></textarea>
+                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <!-- Technician Log Section -->
             <div class="form-section mb-2">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
@@ -174,20 +163,22 @@
                     </thead>
                     <tbody id="tech-log-body"></tbody>
                 </table>
+                <div class="text-right mt-1">
+                    <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
+                </div>
             </div>
 
-            <!-- Office Use Section -->
             <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
                             <label class="label-text">Work completed</label>
-                            <select id="workCompleted" class="value-input"><option>Yes</option><option selected>No</option></select>
+                            <select id="workCompleted" class="value-input"><option>Yes</option><option>No</option></select>
                         </div>
                         <div class="flex items-center space-x-2">
                             <label class="label-text">Additional parts used</label>
-                            <select id="additionalParts" class="value-input"><option>Yes</option><option selected>No</option></select>
+                            <select id="additionalParts" class="value-input"><option>Yes</option><option>No</option></select>
                         </div>
                     </div>
                 </div>
@@ -197,10 +188,8 @@
                 </div>
             </div>
 
-            <!-- Agreement Text -->
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
-            <!-- Signature Section -->
             <div class="grid grid-cols-2 gap-2">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
@@ -248,39 +237,14 @@
                 </div>
             </div>
         </form>
-    </div>
-    
-    <!-- Second page for Additional Parts -->
-    <div class="page hidden" id="parts-page">
-        <form id="parts-form" class="flex flex-col h-full">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Additional Parts Used</h2>
-            <div class="form-section flex-grow">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="border-b">
-                            <th class="pb-1 pr-2 label-text w-2/5">Part Number</th>
-                            <th class="pb-1 pr-2 label-text w-1/5">Quantity</th>
-                            <th class="pb-1 pr-2 label-text w-2/5">Description / Comments</th>
-                        </tr>
-                    </thead>
-                    <tbody id="parts-table-body">
-                        <!-- Part rows will be added here by JavaScript -->
-                    </tbody>
-                </table>
-                <div class="text-right mt-2">
-                    <button type="button" id="add-part-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Part</button>
-                </div>
-            </div>
-        </form>
+
+        <div class="pt-3" id="controls">
+            <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
+            <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
+            <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
+        </div>
     </div>
 
-    <div class="pt-3" id="controls">
-        <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
-        <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
-        <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
-    </div>
-
-    <!-- Signature Modal -->
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
             <div class="p-4 border-b">
@@ -296,13 +260,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- Barcode Scanner Modal -->
-    <div id="scanner-modal" class="fixed inset-0 bg-black flex flex-col items-center justify-center hidden z-50">
-        <p class="text-white text-lg mb-4">Point camera at a barcode</p>
-        <video id="scanner-video" class="w-full max-w-md h-auto"></video>
-        <button id="scanner-cancel-button" class="mt-4 px-4 py-2 bg-red-500 text-white rounded-md">Cancel</button>
-    </div>
 
 
     <script>
@@ -313,78 +270,6 @@
             const agcCanvas = document.getElementById('agc-signature-pad');
             const ownerSignaturePad = new SignaturePad(ownerCanvas);
             const agcSignaturePad = new SignaturePad(agcCanvas);
-            
-            // --- Second Page & Barcode Scanner Logic ---
-            const additionalPartsSelect = document.getElementById('additionalParts');
-            const partsPage = document.getElementById('parts-page');
-            const partsTableBody = document.getElementById('parts-table-body');
-            const addPartButton = document.getElementById('add-part-button');
-            const scannerModal = document.getElementById('scanner-modal');
-            const scannerVideo = document.getElementById('scanner-video');
-            const codeReader = new ZXing.BrowserMultiFormatReader();
-            let currentScanInput = null;
-
-            additionalPartsSelect.addEventListener('change', () => {
-                if (additionalPartsSelect.value === 'Yes') {
-                    partsPage.classList.remove('hidden');
-                    if(partsTableBody.rows.length === 0) addPartRow();
-                } else {
-                    partsPage.classList.add('hidden');
-                }
-            });
-
-            const addPartRow = (data = ['','','']) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="pr-2 pt-1 align-top">
-                        <div class="flex items-center space-x-1">
-                            <input type="text" class="value-input part-number py-0.5 flex-grow" value="${data[0]}">
-                            <button type="button" class="scan-barcode-button text-xs p-1 bg-gray-600 text-white rounded hover:bg-gray-700" title="Scan Barcode">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V9zm2 2V10h1v1H5zM3 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm2 2v-1h1v1H5zM8 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V4zm2 2V5h1v1h-1zM8 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1V9zm2 2v-1h1v1h-1zM8 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H9a1 1 0 01-1-1v-2zm2 2v-1h1v1h-1zM13 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm2 2V5h1v1h-1zM13 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9zm2 2v-1h1v1h-1z" clip-rule="evenodd" /></svg>
-                            </button>
-                        </div>
-                    </td>
-                    <td class="pr-2 pt-1 align-top"><input type="number" class="value-input part-quantity py-0.5" value="${data[1]}"></td>
-                    <td class="pr-2 pt-1 align-top"><textarea rows="1" class="value-input part-description py-0.5">${data[2]}</textarea></td>
-                `;
-                partsTableBody.appendChild(row);
-            };
-            addPartButton.addEventListener('click', addPartRow);
-
-            partsTableBody.addEventListener('click', (event) => {
-                const scanButton = event.target.closest('.scan-barcode-button');
-                if (scanButton) {
-                    currentScanInput = scanButton.previousElementSibling;
-                    startScanner();
-                }
-            });
-            
-            const startScanner = async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    scannerVideo.srcObject = stream;
-                    scannerModal.classList.remove('hidden');
-                    
-                    codeReader.decodeFromStream(stream, scannerVideo, (result, err) => {
-                        if (result) {
-                            currentScanInput.value = result.text;
-                            stopScanner();
-                        }
-                    });
-                } catch (err) {
-                    alert('Could not access camera. Please ensure you have given permission.');
-                    console.error(err);
-                }
-            };
-
-            const stopScanner = () => {
-                if (scannerVideo.srcObject) {
-                    scannerVideo.srcObject.getTracks().forEach(track => track.stop());
-                }
-                scannerModal.classList.add('hidden');
-                codeReader.reset();
-            };
-            document.getElementById('scanner-cancel-button').addEventListener('click', stopScanner);
 
             // --- Modal Signature Logic ---
             const signatureModal = document.getElementById('signature-modal');
@@ -400,7 +285,7 @@
                 canvas.width = rect.width * ratio;
                 canvas.height = rect.height * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
-                modalSignaturePad.fromData(modalSignaturePad.toData()); 
+                modalSignaturePad.fromData(modalSignaturePad.toData()); // Redraw signature after resize
             }
             
             document.querySelectorAll('.expand-signature-button').forEach(button => {
@@ -440,6 +325,9 @@
                 modalSignaturePad.clear();
             });
 
+            // --- End of Modal Logic ---
+
+
             function resizeFormCanvases() {
                 const canvases = [ownerCanvas, agcCanvas];
                 canvases.forEach(canvas => {
@@ -456,8 +344,22 @@
             resizeFormCanvases();
 
             const techLogBody = document.getElementById('tech-log-body');
+            const addLogEntryButton = document.getElementById('add-log-entry-button');
+
+            const checkLogLimit = () => {
+                if (techLogBody.rows.length >= 3) {
+                    addLogEntryButton.disabled = true;
+                    addLogEntryButton.textContent = 'Limit of 3 reached';
+                    addLogEntryButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    addLogEntryButton.disabled = false;
+                    addLogEntryButton.textContent = 'Add Log Entry';
+                    addLogEntryButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            };
 
             const addLogRow = (data = ['', '', '', '', '', '']) => {
+                if (techLogBody.rows.length >= 3) return;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="pr-2"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
@@ -467,8 +369,11 @@
                     <td class="pr-2"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
                     <td class="pr-2"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
+                checkLogLimit();
             };
             
+            addLogEntryButton.addEventListener('click', () => addLogRow());
+
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const encodedData = urlParams.get('data');
@@ -485,17 +390,7 @@
                     if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
                     if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
                     if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
-                    if (jobData.additionalParts) {
-                        additionalPartsSelect.value = jobData.additionalParts;
-                        if(jobData.additionalParts === 'Yes') {
-                           partsPage.classList.remove('hidden');
-                           if (jobData.partsList && jobData.partsList.length > 0) {
-                               jobData.partsList.forEach(partData => addPartRow(partData));
-                           } else {
-                               addPartRow();
-                           }
-                        }
-                    }
+                    if (jobData.additionalParts) document.getElementById('additionalParts').value = jobData.additionalParts;
                     if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
                     if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
                     if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
@@ -504,26 +399,19 @@
                     if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
 
                     techLogBody.innerHTML = '';
-                    for (let i = 0; i < 3; i++) {
-                        addLogRow(jobData.techLog ? jobData.techLog[i] : undefined);
+                    if (jobData.techLog && jobData.techLog.length > 0) {
+                        jobData.techLog.forEach(logData => addLogRow(logData));
+                    } else {
+                         addLogRow();
                     }
                 } else {
-                    for (let i = 0; i < 3; i++) { addLogRow(); }
+                    addLogRow();
                 }
             } catch (error) {
                 console.error("Could not parse job data from URL:", error);
-                for (let i = 0; i < 3; i++) { addLogRow(); }
+                addLogRow();
             }
-
-            const workDoneTextarea = document.getElementById('workDone');
-            workDoneTextarea.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const lines = workDoneTextarea.value.split('\n');
-                    if (lines.length >= 18) {
-                        e.preventDefault();
-                    }
-                }
-            });
+            checkLogLimit();
 
             const setupCharacterCounter = (textareaId, counterId) => {
                 const textarea = document.getElementById(textareaId);
@@ -559,7 +447,7 @@
                 }
                 document.getElementById('owner-signature-error').classList.add('hidden');
 
-                document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
+                document.querySelector('.page').classList.add('is-finalized');
 
                 formDataForEdit = {
                     jobOrderNumber: document.getElementById('jobOrderNumber').value,
@@ -585,15 +473,10 @@
                         row.querySelector('.log-finish').value,
                         row.querySelector('.log-break').value,
                         row.querySelector('.log-notes').value,
-                    ]),
-                    partsList: Array.from(partsTableBody.rows).map(row => [
-                        row.querySelector('.part-number').value,
-                        row.querySelector('.part-quantity').value,
-                        row.querySelector('.part-description').value,
                     ])
                 };
 
-                document.querySelectorAll('#worksheet-form input, #worksheet-form textarea, #worksheet-form select').forEach(el => {
+                form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
                     const textElement = document.createElement('div');
@@ -620,20 +503,12 @@
                         }
                     });
                 });
-                
-                Array.from(partsTableBody.rows).forEach(row => {
-                    Array.from(row.cells).forEach(cell => {
-                        const input = cell.querySelector('input, textarea');
-                        if (input) {
-                            cell.textContent = input.value;
-                            cell.classList.add('final-text');
-                        }
-                    });
-                });
 
                 const sigToImage = (padInstance, containerId, clearContainerId) => {
                     if (!padInstance || !document.getElementById(containerId)) return;
+                    
                     const container = document.getElementById(containerId);
+                    
                     if (padInstance.isEmpty()) {
                         container.innerHTML = '<div class="final-text">&nbsp;</div>';
                     } else {
@@ -644,6 +519,7 @@
                         container.innerHTML = '';
                         container.appendChild(sigImage);
                     }
+                    
                     const clearButtonContainer = document.getElementById(clearContainerId);
                     if (clearButtonContainer) clearButtonContainer.remove();
                 };
@@ -651,8 +527,9 @@
                 sigToImage(ownerSignaturePad, 'owner-signature-container', 'clear-owner-signature-container');
                 sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
                 document.getElementById('owner-signature-error').classList.add('hidden');
-                
+
                 document.getElementById('submit-button').style.display = 'none';
+                document.getElementById('add-log-entry-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
                 document.getElementById('edit-button').classList.remove('hidden');
             });
