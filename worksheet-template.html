@@ -139,9 +139,15 @@
 
             <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="10" maxlength="1500"></textarea>
+                <div>
+                    <textarea id="workDone" class="value-input" rows="10" maxlength="750"></textarea>
+                    <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
+                </div>
                 <div class="label-text mt-2">Technicians comments</div>
-                <textarea id="techComments" rows="3" class="value-input"></textarea>
+                <div>
+                    <textarea id="techComments" rows="3" class="value-input" maxlength="250"></textarea>
+                    <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
+                </div>
             </div>
 
 
@@ -279,12 +285,31 @@
 
             const addLogRow = () => {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td>`;
+                // MODIFIED: Added maxlength="50" to the notes input
+                row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input" maxlength="50"></td>`;
                 techLogBody.appendChild(row);
             };
 
             addLogEntryButton.addEventListener('click', addLogRow);
             addLogRow(); // Add one row by default
+
+            // NEW: Setup character counters
+            const setupCharacterCounter = (textareaId, counterId) => {
+                const textarea = document.getElementById(textareaId);
+                const counter = document.getElementById(counterId);
+                const maxLength = textarea.maxLength;
+
+                const updateCounter = () => {
+                    const currentLength = textarea.value.length;
+                    counter.textContent = `${currentLength} / ${maxLength}`;
+                };
+                textarea.addEventListener('input', updateCounter);
+                updateCounter(); // Initial call to set value on page load
+            };
+
+            setupCharacterCounter('workDone', 'workDoneCounter');
+            setupCharacterCounter('techComments', 'techCommentsCounter');
+
 
             document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
             document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
@@ -304,21 +329,21 @@
                 form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
+                    
                     const textElement = document.createElement('div');
-
-                    // Auto-resize logic for 'workDone' field
-                    if (el.id === 'workDone' && value.length > 800) {
-                        textElement.className = 'final-text final-text-small';
-                    } else {
-                        textElement.className = 'final-text';
-                    }
-
+                    textElement.className = 'final-text';
                     textElement.textContent = value || ' ';
 
-                    if(el.id === 'contactName' || el.id === 'phone'){
+                    // MODIFIED: Logic to correctly replace elements and their counters
+                    if (el.id === 'workDone' || el.id === 'techComments') {
+                        // This element is inside a wrapper div with a counter, so replace the wrapper
+                        el.parentNode.parentNode.replaceChild(textElement, el.parentNode);
+                    } else if (el.id === 'contactName' || el.id === 'phone') {
+                        // Special handling for contact/phone to merge with label
                          el.previousElementSibling.textContent += ' ' + value;
                          el.remove();
                     } else {
+                        // Default replacement for all other inputs/selects
                         el.parentNode.replaceChild(textElement, el);
                     }
                 });
@@ -335,7 +360,7 @@
                 // Handle AGC Signature
                 const agcSigUrl = agcSignaturePad.toDataURL('image/png');
                 const agcSigImage = document.createElement('img');
-agcSigImage.src = agcSigUrl;
+                agcSigImage.src = agcSigUrl;
                 agcSigImage.className = 'w-full h-full object-contain';
                 document.getElementById('agc-signature-container').innerHTML = '';
                 document.getElementById('agc-signature-container').appendChild(agcSigImage);
