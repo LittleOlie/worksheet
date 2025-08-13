@@ -20,10 +20,10 @@
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
             padding: 1cm;
-            min-height: 90vh; /* Flexible height for editing */
+            min-height: 297mm; /* Fixed A4 height for editing and final */
         }
         .page.is-finalized {
-            height: 297mm; /* Fixed A4 height for final view */
+            height: 297mm;
         }
         .label-text {
             font-size: 0.7rem;
@@ -53,10 +53,10 @@
             padding: 1px 0;
             white-space: pre-wrap;
             word-break: break-word;
+            min-height: 26px;
         }
-        /* ADDED: Styles for fixed-height sections in the final view */
         .final-text.work-done-final-view {
-            min-height: 285px; /* Fixed height for 18 rows */
+            min-height: 317px; /* Fixed height for 20 rows */
             padding-top: 4px;
             padding-bottom: 4px;
             display: block;
@@ -74,28 +74,34 @@
         }
 
         @media print {
+            body { background-color: white; }
             @page {
                 size: A4;
                 margin: 0;
             }
             html, body {
                 width: 210mm;
-                height: 297mm;
+                height: auto;
                 margin: 0;
                 padding: 0;
                 box-shadow: none;
-                overflow: hidden;
+                overflow: visible;
             }
-            .page, .page.is-finalized {
+            .page {
                 width: 100%;
-                height: 100%;
+                height: 297mm;
                 margin: 0;
                 box-shadow: none;
                 overflow: hidden;
                 padding: 0.5cm;
                 border-radius: 0;
+                page-break-after: always;
             }
-            #controls, .expand-signature-button { display: none !important; }
+            .page:last-child {
+                page-break-after: auto;
+            }
+            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn { display: none !important; }
+            .hidden { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
                 background-color: white !important;
@@ -103,27 +109,16 @@
                 padding: 0.25rem 0.5rem !important;
                 page-break-inside: avoid;
             }
-            .value-input {
-                border: none !important;
-            }
-            .final-text {
-                 padding: 1px 0 !important;
-            }
-            .final-text.work-done-final-view, .final-text.tech-comments-final-view {
-                border: none !important;
-            }
-            .gap-2 {
-                gap: 0.25rem !important;
-            }
-             .mb-2 {
-                 margin-bottom: 0.25rem !important;
-            }
+            .value-input { border: none !important; }
+            .final-text { padding: 1px 0 !important; }
+            .gap-2 { gap: 0.25rem !important; }
+            .mb-2 { margin-bottom: 0.25rem !important; }
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-200">
 
-    <div class="page">
+    <div id="main-page" class="page">
         <form id="worksheet-form" class="flex flex-col h-full">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
@@ -157,7 +152,7 @@
 
             <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="750"></textarea>
+                <textarea id="workDone" class="value-input" rows="20" style="resize: none;" maxlength="950"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
@@ -187,11 +182,11 @@
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
                             <label class="label-text">Work completed</label>
-                            <select id="workCompleted" class="value-input"><option>Yes</option><option>No</option></select>
+                            <select id="workCompleted" class="value-input"><option>Yes</option><option selected>No</option></select>
                         </div>
                         <div class="flex items-center space-x-2">
                             <label class="label-text">Additional parts used</label>
-                            <select id="additionalParts" class="value-input"><option>Yes</option><option>No</option></select>
+                            <select id="additionalParts" class="value-input"><option>Yes</option><option selected>No</option></select>
                         </div>
                     </div>
                 </div>
@@ -250,22 +245,42 @@
                 </div>
             </div>
         </form>
+    </div>
 
-        <div class="pt-3" id="controls">
-            <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
-            <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
-            <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
+    <div id="parts-page" class="page hidden">
+        <div class="flex justify-between items-center border-b-2 pb-2 mb-4">
+            <h2 class="text-xl font-bold">Additional Parts List</h2>
+            <div id="partsPageJobOrder" class="text-sm font-medium"></div>
         </div>
+        <div class="form-section flex-grow">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b">
+                        <th class="w-2/5 pb-1 pr-2 label-text">Part Number</th>
+                        <th class="w-1/5 pb-1 pr-2 label-text">Quantity</th>
+                        <th class="w-2/5 pb-1 pr-2 label-text">Comments</th>
+                        <th class="pb-1"></th> </tr>
+                </thead>
+                <tbody id="parts-list-body">
+                    </tbody>
+            </table>
+        </div>
+        <div class="mt-4 text-right">
+            <button type="button" id="add-part-btn" class="add-part-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Part</button>
+        </div>
+    </div>
+
+
+    <div id="controls" class="w-[210mm] mx-auto p-4 sticky bottom-0 bg-white shadow-lg">
+        <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
+        <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
+        <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
     </div>
 
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
-            <div class="p-4 border-b">
-                <h3 class="text-lg font-medium">Please Sign Below</h3>
-            </div>
-            <div class="p-4 flex-grow relative">
-                <canvas id="modal-signature-canvas" class="border border-gray-300 rounded-md w-full h-full"></canvas>
-            </div>
+            <div class="p-4 border-b"><h3 class="text-lg font-medium">Please Sign Below</h3></div>
+            <div class="p-4 flex-grow relative"><canvas id="modal-signature-canvas" class="border border-gray-300 rounded-md w-full h-full"></canvas></div>
             <div class="p-4 bg-gray-50 border-t flex justify-end space-x-2">
                 <button type="button" id="modal-clear-button" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Clear</button>
                 <button type="button" id="modal-cancel-button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button>
@@ -273,276 +288,406 @@
             </div>
         </div>
     </div>
+    
+    <div id="scanner-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-medium">Scan Barcode</h3>
+                <button type="button" id="scanner-close-button" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-4">
+                <video id="scanner-video" class="w-full h-auto border bg-black"></video>
+                <div id="scanner-error" class="text-red-500 text-sm mt-2 hidden"></div>
+            </div>
+        </div>
+    </div>
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            let formDataForEdit = {};
+    document.addEventListener('DOMContentLoaded', () => {
+        let formDataForEdit = {};
+        let currentScanTargetInput = null;
+        let videoStream = null;
 
-            const ownerCanvas = document.getElementById('owner-signature-pad');
-            const agcCanvas = document.getElementById('agc-signature-pad');
-            const ownerSignaturePad = new SignaturePad(ownerCanvas);
-            const agcSignaturePad = new SignaturePad(agcCanvas);
+        const ownerCanvas = document.getElementById('owner-signature-pad');
+        const agcCanvas = document.getElementById('agc-signature-pad');
+        const ownerSignaturePad = new SignaturePad(ownerCanvas);
+        const agcSignaturePad = new SignaturePad(agcCanvas);
+        
+        // --- Barcode Scanner Logic ---
+        const scannerModal = document.getElementById('scanner-modal');
+        const scannerVideo = document.getElementById('scanner-video');
+        const scannerError = document.getElementById('scanner-error');
 
-            // --- Modal Signature Logic ---
-            const signatureModal = document.getElementById('signature-modal');
-            const modalCanvas = document.getElementById('modal-signature-canvas');
-            const modalSignaturePad = new SignaturePad(modalCanvas);
-            let currentEditingPad = null;
-
-            function resizeModalCanvas() {
-                const canvas = modalCanvas;
-                if (!canvas || !canvas.parentElement) return;
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                const rect = canvas.parentElement.getBoundingClientRect();
-                canvas.width = rect.width * ratio;
-                canvas.height = rect.height * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                modalSignaturePad.fromData(modalSignaturePad.toData()); // Redraw signature after resize
+        async function startScanner() {
+            if (!('BarcodeDetector' in window)) {
+                scannerError.textContent = 'Barcode Detector is not supported by this browser.';
+                scannerError.classList.remove('hidden');
+                return;
             }
-            
-            document.querySelectorAll('.expand-signature-button').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const target = event.target.dataset.targetPad;
-                    currentEditingPad = (target === 'owner') ? ownerSignaturePad : agcSignaturePad;
-                    
-                    signatureModal.classList.remove('hidden');
-                    resizeModalCanvas();
-                    
-                    if (!currentEditingPad.isEmpty()) {
-                        modalSignaturePad.fromDataURL(currentEditingPad.toDataURL());
-                    } else {
-                        modalSignaturePad.clear();
-                    }
-                });
-            });
-
-            document.getElementById('modal-save-button').addEventListener('click', () => {
-                if (currentEditingPad) {
-                    if (!modalSignaturePad.isEmpty()) {
-                        currentEditingPad.fromDataURL(modalSignaturePad.toDataURL());
-                    } else {
-                        currentEditingPad.clear();
-                    }
-                }
-                signatureModal.classList.add('hidden');
-                currentEditingPad = null;
-            });
-
-            document.getElementById('modal-cancel-button').addEventListener('click', () => {
-                signatureModal.classList.add('hidden');
-                currentEditingPad = null;
-            });
-
-            document.getElementById('modal-clear-button').addEventListener('click', () => {
-                modalSignaturePad.clear();
-            });
-
-            // --- End of Modal Logic ---
-
-
-            function resizeFormCanvases() {
-                const canvases = [ownerCanvas, agcCanvas];
-                canvases.forEach(canvas => {
-                    if (!canvas) return;
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    canvas.getContext("2d").scale(ratio, ratio);
-                });
-                ownerSignaturePad.fromData(ownerSignaturePad.toData());
-                agcSignaturePad.fromData(agcSignaturePad.toData());
-            }
-            window.addEventListener("resize", resizeFormCanvases);
-            resizeFormCanvases();
-
-            const techLogBody = document.getElementById('tech-log-body');
-            const MAX_LOG_ROWS = 3;
-
-            const addLogRow = (data = ['', '', '', '', '', '']) => {
-                const row = document.createElement('tr');
-                row.className = 'border-b last:border-b-0';
-                row.innerHTML = `
-                    <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
-                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
-                    <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
-                    <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
-                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
-                    <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
-                techLogBody.appendChild(row);
-            };
+            scannerError.classList.add('hidden');
             
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const encodedData = urlParams.get('data');
-                let jobData = {};
-                if (encodedData) {
-                    jobData = JSON.parse(atob(encodedData));
-                }
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                scannerVideo.srcObject = videoStream;
+                await scannerVideo.play();
+                scannerModal.classList.remove('hidden');
                 
-                document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
-                document.getElementById('clientName').value = jobData.clientName || '';
-                document.getElementById('contactName').value = jobData.contactName || '';
-                document.getElementById('phone').value = jobData.phone || '';
-                document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
-                document.getElementById('work-description').value = jobData.workDescription || '';
+                const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'code_39', 'codabar', 'ean_8', 'qr_code'] });
 
-                if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
-                if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
-                if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
-                if (jobData.additionalParts) document.getElementById('additionalParts').value = jobData.additionalParts;
-                if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
-                if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
-                if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
-                if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
-                if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
-                if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
+                const detectBarcode = async () => {
+                    try {
+                        const barcodes = await barcodeDetector.detect(scannerVideo);
+                        if (barcodes.length > 0) {
+                            if (currentScanTargetInput) {
+                                currentScanTargetInput.value = barcodes[0].rawValue;
+                            }
+                            stopScanner();
+                        } else if (!scannerModal.classList.contains('hidden')) {
+                            requestAnimationFrame(detectBarcode);
+                        }
+                    } catch (e) {
+                        console.error('Barcode detection failed:', e);
+                        scannerError.textContent = 'Could not detect barcode. Please try again.';
+                        scannerError.classList.remove('hidden');
+                    }
+                };
+                detectBarcode();
 
-                techLogBody.innerHTML = '';
-                const logs = (jobData && jobData.techLog) ? jobData.techLog : [];
-                for (let i = 0; i < MAX_LOG_ROWS; i++) {
-                    addLogRow(logs[i]);
+            } catch (err) {
+                console.error('Camera access error:', err);
+                scannerError.textContent = 'Could not access camera. Please check permissions.';
+                scannerError.classList.remove('hidden');
+            }
+        }
+
+        function stopScanner() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            scannerModal.classList.add('hidden');
+        }
+
+        document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
+
+        // --- Parts Page Logic ---
+        const additionalPartsSelect = document.getElementById('additionalParts');
+        const partsPage = document.getElementById('parts-page');
+        const addPartBtn = document.getElementById('add-part-btn');
+        const partsListBody = document.getElementById('parts-list-body');
+
+        additionalPartsSelect.addEventListener('change', () => {
+            if (additionalPartsSelect.value === 'Yes') {
+                partsPage.classList.remove('hidden');
+                if (partsListBody.children.length === 0) {
+                    addPartRow(); // Add one row by default
                 }
+            } else {
+                partsPage.classList.add('hidden');
+            }
+        });
 
-            } catch (error) {
-                console.error("Could not parse job data from URL:", error);
-                techLogBody.innerHTML = '';
-                for (let i = 0; i < MAX_LOG_ROWS; i++) {
-                    addLogRow();
+        function addPartRow(data = ['', '', '']) {
+            const row = document.createElement('tr');
+            row.className = 'border-b last:border-b-0';
+            const partId = `part-${Date.now()}`;
+            row.innerHTML = `
+                <td class="pr-2 py-1">
+                    <div class="flex items-center">
+                        <input type="text" class="value-input part-number py-1" value="${data[0]}">
+                        <button type="button" data-target="${partId}" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 0 01-1-1v-2zM3 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm7-10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm3 10a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zM9 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </td>
+                <td class="pr-2 py-1"><input type="number" class="value-input part-quantity py-1" value="${data[1]}"></td>
+                <td class="pr-2 py-1"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td>
+                <td class="text-center"><button type="button" class="remove-part-btn text-red-500 hover:text-red-700">&times;</button></td>
+            `;
+            row.querySelector('.part-number').id = partId;
+            partsListBody.appendChild(row);
+        }
+        
+        addPartBtn.addEventListener('click', () => addPartRow());
+        
+        partsListBody.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-part-btn')) {
+                e.target.closest('tr').remove();
+            }
+            const scanButton = e.target.closest('.scan-part-btn');
+            if (scanButton) {
+                const targetInputId = scanButton.dataset.target;
+                currentScanTargetInput = document.getElementById(targetInputId);
+                startScanner();
+            }
+        });
+
+
+        // --- Signature Modal Logic ---
+        const signatureModal = document.getElementById('signature-modal');
+        const modalCanvas = document.getElementById('modal-signature-canvas');
+        const modalSignaturePad = new SignaturePad(modalCanvas);
+        let currentEditingPad = null;
+
+        function resizeModalCanvas() {
+            const canvas = modalCanvas;
+            if (!canvas || !canvas.parentElement) return;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * ratio;
+            canvas.height = rect.height * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            modalSignaturePad.fromData(modalSignaturePad.toData());
+        }
+        
+        document.querySelectorAll('.expand-signature-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const target = event.target.dataset.targetPad;
+                currentEditingPad = (target === 'owner') ? ownerSignaturePad : agcSignaturePad;
+                signatureModal.classList.remove('hidden');
+                resizeModalCanvas();
+                if (!currentEditingPad.isEmpty()) {
+                    modalSignaturePad.fromDataURL(currentEditingPad.toDataURL());
+                } else {
+                    modalSignaturePad.clear();
+                }
+            });
+        });
+
+        document.getElementById('modal-save-button').addEventListener('click', () => {
+            if (currentEditingPad) {
+                if (!modalSignaturePad.isEmpty()) {
+                    currentEditingPad.fromDataURL(modalSignaturePad.toDataURL());
+                } else {
+                    currentEditingPad.clear();
                 }
             }
-
-            const setupCharacterCounter = (textareaId, counterId) => {
-                const textarea = document.getElementById(textareaId);
-                const counter = document.getElementById(counterId);
-                if (!textarea || !counter) return;
-                const maxLength = textarea.maxLength;
-                const updateCounter = () => {
-                    counter.textContent = `${textarea.value.length} / ${maxLength}`;
-                };
-                textarea.addEventListener('input', updateCounter);
-                updateCounter();
-            };
-            setupCharacterCounter('workDone', 'workDoneCounter');
-            setupCharacterCounter('techComments', 'techCommentsCounter');
-
-            document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
-            document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
-
-            document.getElementById('edit-button').addEventListener('click', () => {
-                const encodedData = btoa(JSON.stringify(formDataForEdit));
-                window.location.href = window.location.pathname + '?data=' + encodedData;
-            });
-
-            document.getElementById('submit-button').addEventListener('click', () => {
-                const form = document.getElementById('worksheet-form');
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                if (ownerSignaturePad.isEmpty()) {
-                    document.getElementById('owner-signature-error').classList.remove('hidden');
-                    return;
-                }
-                document.getElementById('owner-signature-error').classList.add('hidden');
-
-                document.querySelector('.page').classList.add('is-finalized');
-
-                formDataForEdit = {
-                    jobOrderNumber: document.getElementById('jobOrderNumber').value,
-                    clientName: document.getElementById('clientName').value,
-                    contactName: document.getElementById('contactName').value,
-                    phone: document.getElementById('phone').value,
-                    portOfCall: document.getElementById('portOfCallDisplay').textContent,
-                    workDescription: document.getElementById('work-description').value,
-                    workDone: document.getElementById('workDone').value,
-                    techComments: document.getElementById('techComments').value,
-                    workCompleted: document.getElementById('workCompleted').value,
-                    additionalParts: document.getElementById('additionalParts').value,
-                    nextPort: document.getElementById('nextPort').value,
-                    agcName: document.getElementById('agcName').value,
-                    agcPosition: document.getElementById('agcPosition').value,
-                    ownerName: document.getElementById('ownerName').value,
-                    ownerPosition: document.getElementById('ownerPosition').value,
-                    ownerDate: document.getElementById('ownerDate').value,
-                    techLog: Array.from(techLogBody.rows).map(row => [
-                        row.querySelector('.log-date').value,
-                        row.querySelector('.log-name').value,
-                        row.querySelector('.log-start').value,
-                        row.querySelector('.log-finish').value,
-                        row.querySelector('.log-break').value,
-                        row.querySelector('.log-notes').value,
-                    ])
-                };
-
-                form.querySelectorAll('input, textarea, select').forEach(el => {
-                    let value = el.value;
-                    if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
-                    const textElement = document.createElement('div');
-                    textElement.className = 'final-text';
-                    textElement.textContent = value || ' ';
-
-                    if (el.id === 'workDone') {
-                        textElement.classList.add('work-done-final-view');
-                        const counterElement = el.nextElementSibling;
-                        el.parentNode.replaceChild(textElement, el);
-                        if (counterElement) counterElement.remove();
-                    } else if (el.id === 'techComments') {
-                         textElement.classList.add('tech-comments-final-view');
-                        const counterElement = el.nextElementSibling;
-                        el.parentNode.replaceChild(textElement, el);
-                        if (counterElement) counterElement.remove();
-                    } else if (el.id === 'contactName' || el.id === 'phone') {
-                         el.previousElementSibling.textContent += ' ' + value;
-                         el.remove();
-                    } else {
-                        el.parentNode.replaceChild(textElement, el);
-                    }
-                });
-                
-                Array.from(techLogBody.rows).forEach(row => {
-                    Array.from(row.cells).forEach(cell => {
-                        const input = cell.querySelector('input');
-                        if (input) {
-                            cell.textContent = input.value || ' ';
-                            cell.classList.add('final-text');
-                            cell.style.paddingTop = '1px';
-                            cell.style.paddingBottom = '1px';
-                        }
-                    });
-                });
-
-                const sigToImage = (padInstance, containerId, clearContainerId) => {
-                    if (!padInstance || !document.getElementById(containerId)) return;
-                    
-                    const container = document.getElementById(containerId);
-                    
-                    if (padInstance.isEmpty()) {
-                        container.innerHTML = '<div class="final-text">&nbsp;</div>';
-                    } else {
-                        const sigUrl = padInstance.toDataURL('image/png');
-                        const sigImage = document.createElement('img');
-                        sigImage.src = sigUrl;
-                        sigImage.className = 'w-full h-full object-contain';
-                        container.innerHTML = '';
-                        container.appendChild(sigImage);
-                    }
-                    
-                    const clearButtonContainer = document.getElementById(clearContainerId);
-                    if (clearButtonContainer) clearButtonContainer.remove();
-                };
-
-                sigToImage(ownerSignaturePad, 'owner-signature-container', 'clear-owner-signature-container');
-                sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
-                document.getElementById('owner-signature-error').classList.add('hidden');
-
-                document.getElementById('submit-button').style.display = 'none';
-                document.getElementById('print-button').classList.remove('hidden');
-                document.getElementById('edit-button').classList.remove('hidden');
-            });
-
-            document.getElementById('print-button').addEventListener('click', () => window.print());
+            signatureModal.classList.add('hidden');
         });
+        document.getElementById('modal-cancel-button').addEventListener('click', () => signatureModal.classList.add('hidden'));
+        document.getElementById('modal-clear-button').addEventListener('click', () => modalSignaturePad.clear());
+
+
+        // --- Main Form Initialization & Logic ---
+        function resizeFormCanvases() {
+            [ownerCanvas, agcCanvas].forEach(canvas => {
+                if (!canvas) return;
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+            });
+            ownerSignaturePad.fromData(ownerSignaturePad.toData());
+            agcSignaturePad.fromData(agcSignaturePad.toData());
+        }
+        window.addEventListener("resize", resizeFormCanvases);
+
+        const techLogBody = document.getElementById('tech-log-body');
+        const MAX_LOG_ROWS = 3;
+
+        const addLogRow = (data = ['', '', '', '', '', '']) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b last:border-b-0';
+            row.innerHTML = `
+                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
+            techLogBody.appendChild(row);
+        };
+        
+        // Populate form from URL data if available
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedData = urlParams.get('data');
+            let jobData = {};
+            if (encodedData) {
+                jobData = JSON.parse(atob(encodedData));
+            }
+            
+            document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
+            document.getElementById('clientName').value = jobData.clientName || '';
+            document.getElementById('contactName').value = jobData.contactName || '';
+            document.getElementById('phone').value = jobData.phone || '';
+            document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
+            document.getElementById('work-description').value = jobData.workDescription || '';
+            if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
+            if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
+            if (jobData.workCompleted) document.getElementById('workCompleted').value = jobData.workCompleted;
+            if (jobData.additionalParts) {
+                document.getElementById('additionalParts').value = jobData.additionalParts;
+                if (jobData.additionalParts === 'Yes') {
+                    partsPage.classList.remove('hidden');
+                    if(jobData.partsList && jobData.partsList.length > 0) {
+                        jobData.partsList.forEach(part => addPartRow(part));
+                    } else {
+                        addPartRow();
+                    }
+                }
+            }
+            if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
+            if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
+            if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
+            if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
+            if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
+            if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
+
+            techLogBody.innerHTML = '';
+            const logs = (jobData.techLog && jobData.techLog.length > 0) ? jobData.techLog : [];
+            for (let i = 0; i < MAX_LOG_ROWS; i++) {
+                addLogRow(logs[i]);
+            }
+            document.getElementById('partsPageJobOrder').textContent = `Job Order: ${jobData.jobOrderNumber || 'N/A'}`;
+
+        } catch (error) {
+            console.error("Could not parse job data from URL:", error);
+            techLogBody.innerHTML = '';
+            for (let i = 0; i < MAX_LOG_ROWS; i++) {
+                addLogRow();
+            }
+        }
+        resizeFormCanvases();
+
+
+        const setupCharacterCounter = (textareaId, counterId) => {
+            const textarea = document.getElementById(textareaId);
+            const counter = document.getElementById(counterId);
+            if (!textarea || !counter) return;
+            const maxLength = textarea.maxLength;
+            const updateCounter = () => {
+                counter.textContent = `${textarea.value.length} / ${maxLength}`;
+            };
+            textarea.addEventListener('input', updateCounter);
+            updateCounter();
+        };
+        setupCharacterCounter('workDone', 'workDoneCounter');
+        setupCharacterCounter('techComments', 'techCommentsCounter');
+
+        document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
+        document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
+
+        document.getElementById('edit-button').addEventListener('click', () => {
+            const encodedData = btoa(JSON.stringify(formDataForEdit));
+            window.location.href = window.location.pathname + '?data=' + encodedData;
+        });
+
+        // --- Finalize and Submit Logic ---
+        document.getElementById('submit-button').addEventListener('click', () => {
+            const form = document.getElementById('worksheet-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            if (ownerSignaturePad.isEmpty()) {
+                document.getElementById('owner-signature-error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('owner-signature-error').classList.add('hidden');
+
+            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
+
+            // Collect all form data including parts list
+            formDataForEdit = {
+                jobOrderNumber: document.getElementById('jobOrderNumber').value,
+                clientName: document.getElementById('clientName').value,
+                contactName: document.getElementById('contactName').value,
+                phone: document.getElementById('phone').value,
+                portOfCall: document.getElementById('portOfCallDisplay').textContent,
+                workDescription: document.getElementById('work-description').value,
+                workDone: document.getElementById('workDone').value,
+                techComments: document.getElementById('techComments').value,
+                workCompleted: document.getElementById('workCompleted').value,
+                additionalParts: document.getElementById('additionalParts').value,
+                nextPort: document.getElementById('nextPort').value,
+                agcName: document.getElementById('agcName').value,
+                agcPosition: document.getElementById('agcPosition').value,
+                ownerName: document.getElementById('ownerName').value,
+                ownerPosition: document.getElementById('ownerPosition').value,
+                ownerDate: document.getElementById('ownerDate').value,
+                techLog: Array.from(techLogBody.rows).map(row => [
+                    row.querySelector('.log-date').value,
+                    row.querySelector('.log-name').value,
+                    row.querySelector('.log-start').value,
+                    row.querySelector('.log-finish').value,
+                    row.querySelector('.log-break').value,
+                    row.querySelector('.log-notes').value,
+                ]),
+                partsList: Array.from(partsListBody.rows).map(row => [
+                    row.querySelector('.part-number').value,
+                    row.querySelector('.part-quantity').value,
+                    row.querySelector('.part-comments').value,
+                ])
+            };
+
+            // Convert all inputs to static text for printing
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.closest('#parts-page')) return; // Skip parts page inputs for now
+                let value = el.value;
+                if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
+                const textElement = document.createElement('div');
+                textElement.className = 'final-text';
+                textElement.textContent = value || ' ';
+
+                if (el.id === 'workDone') textElement.classList.add('work-done-final-view');
+                if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view');
+                
+                const counterElement = el.nextElementSibling;
+                if(counterElement && (counterElement.id === 'workDoneCounter' || counterElement.id === 'techCommentsCounter')) counterElement.remove();
+
+                if (el.id === 'contactName' || el.id === 'phone') {
+                    el.previousElementSibling.textContent += ' ' + value;
+                    el.remove();
+                } else {
+                    el.parentNode.replaceChild(textElement, el);
+                }
+            });
+            
+            // Convert main log table inputs
+            Array.from(techLogBody.rows).forEach(row => {
+                row.querySelectorAll('input').forEach(input => {
+                    const cell = input.parentElement;
+                    cell.textContent = input.value || ' ';
+                    cell.classList.add('final-text');
+                });
+            });
+
+            // Convert parts list table inputs
+            Array.from(partsListBody.rows).forEach(row => {
+                row.querySelectorAll('input').forEach(input => {
+                    const cell = input.closest('td');
+                    cell.textContent = input.value || ' ';
+                    cell.classList.add('final-text');
+                });
+                row.querySelector('.remove-part-btn')?.parentElement.remove();
+            });
+
+
+            const sigToImage = (padInstance, containerId, clearContainerId) => {
+                if (!padInstance || !document.getElementById(containerId)) return;
+                const container = document.getElementById(containerId);
+                if (padInstance.isEmpty()) {
+                    container.innerHTML = '<div class="final-text">&nbsp;</div>';
+                } else {
+                    const sigImage = document.createElement('img');
+                    sigImage.src = padInstance.toDataURL('image/png');
+                    sigImage.className = 'w-full h-full object-contain';
+                    container.innerHTML = '';
+                    container.appendChild(sigImage);
+                }
+                document.getElementById(clearContainerId)?.remove();
+            };
+
+            sigToImage(ownerSignaturePad, 'owner-signature-container', 'clear-owner-signature-container');
+            sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
+            
+            document.getElementById('owner-signature-error').classList.add('hidden');
+            document.getElementById('controls').style.display = 'none'; // Hide main controls container
+            document.body.classList.remove('bg-gray-200'); // Clean background for printing
+            window.print(); // Trigger print dialog
+        });
+    });
     </script>
 </body>
 </html>
