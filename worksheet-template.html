@@ -251,7 +251,7 @@
                 <h3 class="text-lg font-medium">Please Sign Below</h3>
             </div>
             <div class="p-4 flex-grow relative">
-                <canvas id="modal-signature-canvas" class="border border-gray-300 rounded-md"></canvas>
+                <canvas id="modal-signature-canvas" class="border border-gray-300 rounded-md w-full h-full"></canvas>
             </div>
             <div class="p-4 bg-gray-50 border-t flex justify-end space-x-2">
                 <button type="button" id="modal-clear-button" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Clear</button>
@@ -271,7 +271,7 @@
             const ownerSignaturePad = new SignaturePad(ownerCanvas);
             const agcSignaturePad = new SignaturePad(agcCanvas);
 
-            // --- NEW: Modal Signature Logic ---
+            // --- Modal Signature Logic ---
             const signatureModal = document.getElementById('signature-modal');
             const modalCanvas = document.getElementById('modal-signature-canvas');
             const modalSignaturePad = new SignaturePad(modalCanvas);
@@ -285,7 +285,7 @@
                 canvas.width = rect.width * ratio;
                 canvas.height = rect.height * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
-                modalSignaturePad.clear();
+                modalSignaturePad.fromData(modalSignaturePad.toData()); // Redraw signature after resize
             }
             
             document.querySelectorAll('.expand-signature-button').forEach(button => {
@@ -293,14 +293,14 @@
                     const target = event.target.dataset.targetPad;
                     currentEditingPad = (target === 'owner') ? ownerSignaturePad : agcSignaturePad;
                     
-                    resizeModalCanvas(); // Resize first
+                    signatureModal.classList.remove('hidden');
+                    resizeModalCanvas();
                     
                     if (!currentEditingPad.isEmpty()) {
                         modalSignaturePad.fromDataURL(currentEditingPad.toDataURL());
                     } else {
                         modalSignaturePad.clear();
                     }
-                    signatureModal.classList.remove('hidden');
                 });
             });
 
