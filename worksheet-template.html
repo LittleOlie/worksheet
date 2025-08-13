@@ -21,23 +21,27 @@
             min-height: 297mm;
             padding: 1cm;
         }
-        .bordered-box {
-            border: 1px solid black;
-        }
         .label-text {
             font-size: 0.7rem;
             color: #4a5568;
+            font-weight: 700;
         }
         .value-input {
             width: 100%;
-            border: none;
-            padding: 2px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 4px 8px;
             font-size: 0.8rem;
             font-weight: 500;
         }
+        .value-input[readonly] {
+            background-color: #f9fafb;
+            cursor: not-allowed;
+            border-color: transparent;
+        }
         .value-input:focus {
-            outline: none;
-            --tw-ring-color: transparent;
+            outline: 2px solid #3b82f6;
+            border-color: transparent;
         }
         .final-text {
             font-size: 0.8rem;
@@ -47,10 +51,17 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        /* On-screen layout: clean cards */
+        .form-section {
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
         @media print {
             @page {
                 size: A4;
-                margin: 0;
+                margin: 0.5cm; /* Add some margin for printing */
             }
             body, .page {
                 margin: 0;
@@ -60,6 +71,20 @@
                 height: 100%;
             }
             #controls { display: none !important; }
+            
+            /* PDF/Print layout: apply the boxes */
+            .form-section {
+                border: 1px solid black !important;
+                background-color: white !important;
+                border-radius: 0 !important;
+                padding: 0.5rem !important;
+            }
+            .value-input {
+                border: none !important;
+            }
+            .final-text {
+                 padding: 2px 0 !important;
+            }
         }
     </style>
 </head>
@@ -68,74 +93,59 @@
     <div class="page">
         <form id="worksheet-form">
             <!-- Header Section -->
-            <div class="grid grid-cols-12 gap-px">
-                <div class="col-span-4 bordered-box p-2">
+            <div class="grid grid-cols-12 gap-4 mb-4">
+                <div class="col-span-7 form-section">
                     <div class="label-text">Job order number</div>
                     <input type="text" id="jobOrderNumber" readonly class="value-input">
                     <div class="label-text mt-1">(TOW PRO INSTALLATION)</div>
                 </div>
-                <div class="col-span-3 bordered-box"></div>
-                <div class="col-span-5 bordered-box p-2">
+                <div class="col-span-5 form-section">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
-                    <div class="grid grid-cols-2 mt-1">
-                        <div>
-                            <span class="label-text">Contact: </span>
-                            <input type="text" id="contactName" readonly class="value-input inline w-auto">
-                        </div>
-                        <div>
-                            <span class="label-text">Phone: </span>
-                            <input type="tel" id="phone" readonly class="value-input inline w-auto">
-                        </div>
+                    <div class="mt-1">
+                        <span class="label-text">Contact: </span>
+                        <input type="text" id="contactName" readonly class="value-input inline w-auto">
+                    </div>
+                     <div class="mt-1">
+                        <span class="label-text">Phone: </span>
+                        <input type="tel" id="phone" readonly class="value-input inline w-auto">
                     </div>
                 </div>
             </div>
 
             <!-- Second Row Section -->
-            <div class="grid grid-cols-12 gap-px mt-px">
-                <div class="col-span-7 bordered-box p-2">
+            <div class="grid grid-cols-12 gap-4 mb-4">
+                <div class="col-span-7 form-section">
                     <div class="label-text">Port of call / Place of work</div>
                     <input type="text" id="portOfCall" readonly class="value-input">
                 </div>
-                <div class="col-span-5 bordered-box p-2">
+                <div class="col-span-5 form-section">
                     <div class="label-text">Job status</div>
                     <input type="text" id="jobStatus" value="To be carried out" readonly class="value-input">
                 </div>
             </div>
             
             <!-- Work To Do Section -->
-            <div class="bordered-box mt-px p-2">
-                <textarea id="work-description" readonly rows="1" class="value-input w-full font-bold"></textarea>
-                <table class="w-full text-left mt-1">
-                    <thead>
-                        <tr class="border-b border-black">
-                            <th class="w-1/4 p-1 label-text">Equipement make/model</th>
-                            <th class="w-1/4 p-1 label-text">Serial number</th>
-                            <th class="w-1/3 p-1 label-text">Work to do</th>
-                            <th class="w-1/6 p-1 label-text">Complete</th>
-                        </tr>
-                    </thead>
-                    <tbody id="work-table-body"></tbody>
-                </table>
+            <div class="form-section mb-4">
+                <div class="label-text mb-2">Work Description</div>
+                <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold"></textarea>
+            </div>
+            
+            <!-- Work Done / Comments Section -->
+            <div class="form-section mb-4">
+                <div class="label-text">Work done</div>
+                <textarea id="workDone" rows="6" class="value-input"></textarea>
+                <div class="label-text mt-4">Technicians comments</div>
+                <textarea id="techComments" rows="3" class="value-input"></textarea>
             </div>
 
-            <!-- Work Done / Comments Section -->
-            <div class="grid grid-cols-2 gap-px mt-px">
-                <div class="bordered-box p-2">
-                    <div class="label-text">Work done</div>
-                    <textarea id="workDone" rows="4" class="value-input"></textarea>
-                </div>
-                <div class="bordered-box p-2">
-                    <div class="label-text">Technicians comments</div>
-                    <textarea id="techComments" rows="4" class="value-input"></textarea>
-                </div>
-            </div>
 
             <!-- Technician Log Section -->
-            <div class="bordered-box mt-px p-2">
+            <div class="form-section mb-4">
+                 <div class="label-text mb-2">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="border-b border-black">
+                        <tr class="border-b">
                             <th class="p-1 label-text">Date attented</th>
                             <th class="p-1 label-text">Name</th>
                             <th class="p-1 label-text">Start time</th>
@@ -149,8 +159,8 @@
             </div>
             
             <!-- Office Use Section -->
-            <div class="grid grid-cols-3 gap-px mt-px">
-                <div class="col-span-2 bordered-box p-2">
+            <div class="grid grid-cols-12 gap-4 mb-4">
+                <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
@@ -163,7 +173,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bordered-box p-2">
+                <div class="col-span-4 form-section">
                     <div class="label-text">Next port of call</div>
                     <input type="text" id="nextPort" class="value-input">
                 </div>
@@ -173,18 +183,18 @@
             <p class="text-center text-xs italic my-2">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <!-- Signature Section -->
-            <div class="grid grid-cols-2 gap-px">
-                <div class="bordered-box p-2">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-section">
                     <div class="label-text font-bold">For and on behalf of AGC Marine Solutions</div>
                     <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="agcName" class="value-input"></div>
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="agcPosition" class="value-input"></div>
                 </div>
-                <div class="bordered-box p-2">
+                <div class="form-section">
                     <div class="label-text font-bold">For and on behalf of the owner</div>
                     <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="ownerName" required class="value-input"></div>
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="ownerPosition" required class="value-input"></div>
                     <div class="grid grid-cols-2 gap-4 mt-2">
-                        <div><label class="label-text">Signature</label><div id="signature-container" class="h-12"><canvas id="signature-pad" class="w-full h-full"></canvas></div></div>
+                        <div><label class="label-text">Signature</label><div id="signature-container" class="h-16 bg-white rounded-md border"><canvas id="signature-pad" class="w-full h-full"></canvas></div></div>
                         <div><label class="label-text">Date</label><input type="date" id="ownerDate" required class="value-input"></div>
                     </div>
                     <p id="signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
@@ -192,7 +202,7 @@
                 </div>
             </div>
             
-            <div class="text-center text-xs mt-1">Agc marine solutions ( ) GM 2007-2025</div>
+            <div class="text-center text-xs mt-2">Agc marine solutions ( ) GM 2007-2025</div>
         </form>
 
         <div class="pt-4" id="controls">
@@ -232,15 +242,8 @@
                 console.error("Could not parse job data from URL:", error);
             }
 
-            const workTableBody = document.getElementById('work-table-body');
-            for (let i = 0; i < 5; i++) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><select class="value-input"><option>Yes</option><option>No</option></select></td>`;
-                workTableBody.appendChild(row);
-            }
-
             const techLogBody = document.getElementById('tech-log-body');
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 4; i++) {
                 const row = document.createElement('tr');
                 row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td>`;
                 techLogBody.appendChild(row);
@@ -260,26 +263,29 @@
                 }
                 document.getElementById('signature-error').classList.add('hidden');
 
-                // Convert form to text
                 form.querySelectorAll('input, textarea, select').forEach(el => {
                     let value = el.value;
                     if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
                     const textElement = document.createElement('div');
                     textElement.className = 'final-text';
                     textElement.textContent = value || ' ';
-                    el.parentNode.replaceChild(textElement, el);
+                    
+                    if(el.id === 'contactName' || el.id === 'phone'){
+                         el.previousElementSibling.textContent += ' ' + value;
+                         el.remove();
+                    } else {
+                        el.parentNode.replaceChild(textElement, el);
+                    }
                 });
 
-                // Handle signature
                 const signatureDataUrl = signaturePad.toDataURL('image/png');
                 const sigImage = document.createElement('img');
                 sigImage.src = signatureDataUrl;
-                sigImage.className = 'w-full h-12 object-contain';
+                sigImage.className = 'w-full h-16 object-contain';
                 document.getElementById('signature-container').innerHTML = '';
                 document.getElementById('signature-container').appendChild(sigImage);
                 document.getElementById('clear-signature-container').remove();
 
-                // Show print button
                 document.getElementById('submit-button').style.display = 'none';
                 document.getElementById('print-button').classList.remove('hidden');
             });
