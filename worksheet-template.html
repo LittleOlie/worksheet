@@ -22,20 +22,19 @@
             width: 210mm;
             padding: 1cm;
             min-height: 297mm; /* Fixed A4 height */
-            position: relative; /* Needed for watermark positioning */
-            overflow: hidden; /* Clips the watermark at page edges */
+            position: relative; 
+            overflow: hidden; 
         }
         .page.is-finalized {
             height: 297mm;
         }
-        /* ADDED: Watermark Overlay Styles */
         .watermark-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
-            color: rgba(156, 163, 175, 0.15); /* Light gray, semi-transparent */
+            color: rgba(156, 163, 175, 0.15); 
             font-size: 8rem;
             font-weight: 800;
             text-align: center;
@@ -45,7 +44,7 @@
             transition: color 0.3s ease-in-out;
         }
         .watermark-overlay.finished-watermark {
-            color: rgba(239, 68, 68, 0.15); /* Red tint when finished */
+            color: rgba(239, 68, 68, 0.15);
         }
         .label-text {
             font-size: 0.7rem;
@@ -90,10 +89,12 @@
             display: block;
         }
         .form-section {
-            background-color: #f9fafb;
+            /* MODIFIED: Background is now transparent to show watermark */
+            background-color: transparent;
+            border: 1px solid #e5e7eb; /* Added border to maintain visual grouping */
             padding: 0.5rem;
             border-radius: 8px;
-            position: relative; /* Ensures form content appears above watermark */
+            position: relative;
             z-index: 1;
         }
 
@@ -128,7 +129,8 @@
             .hidden { display: none !important; }
             .form-section {
                 border: 1px solid black !important;
-                background-color: white !important;
+                /* MODIFIED: Background is now transparent for printing as well */
+                background-color: transparent !important;
                 border-radius: 0 !important;
                 padding: 0.25rem 0.5rem !important;
                 page-break-inside: avoid;
@@ -236,7 +238,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="agc" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
                                 <button type="button" id="clear-agc-signature" class="text-blue-600 hover:underline">Clear</button>
@@ -260,7 +262,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="owner" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
@@ -336,10 +338,9 @@
         let formDataForEdit = {};
         let currentScanTargetInput = null;
         
-        // --- Barcode Scanner Logic ---
+        const html5QrCode = new Html5Qrcode("scanner-container");
         const scannerModal = document.getElementById('scanner-modal');
         const scannerError = document.getElementById('scanner-error');
-        const html5QrCode = new Html5Qrcode("scanner-container");
 
         const qrCodeSuccessCallback = (decodedText, decodedResult) => {
             if (currentScanTargetInput) {
@@ -371,7 +372,6 @@
         
         document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
 
-        // --- Watermark Logic ---
         const workCompletedSelect = document.getElementById('workCompleted');
         const watermarkOverlays = document.querySelectorAll('.watermark-overlay');
         const watermarkTexts = document.querySelectorAll('.watermark-text');
@@ -391,14 +391,11 @@
         }
         workCompletedSelect.addEventListener('change', updateWatermark);
 
-
-        // --- Signature Pad Logic ---
         const ownerCanvas = document.getElementById('owner-signature-pad');
         const agcCanvas = document.getElementById('agc-signature-pad');
         const ownerSignaturePad = new SignaturePad(ownerCanvas);
         const agcSignaturePad = new SignaturePad(agcCanvas);
 
-        // --- Parts Page Logic ---
         const additionalPartsSelect = document.getElementById('additionalParts');
         const partsPage = document.getElementById('parts-page');
         const addPartBtn = document.getElementById('add-part-btn');
@@ -423,19 +420,19 @@
             for (let i = 1; i <= 50; i++) {
                 quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`;
             }
-            const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`;
+            const quantitySelect = `<select class="value-input part-quantity py-1 bg-white">${quantityOptions}</select>`;
 
             row.innerHTML = `
                 <td class="pr-2 py-1">
                     <div class="flex items-center">
-                        <input type="text" class="value-input part-number py-1" value="${data[0]}">
+                        <input type="text" class="value-input part-number py-1 bg-white" value="${data[0]}">
                         <button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 0 01-1-1v-2zM3 14a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm7-10a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V4zm3 10a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2zM9 9a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
                 </td>
                 <td class="pr-2 py-1">${quantitySelect}</td>
-                <td class="pr-2 py-1"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td>
+                <td class="pr-2 py-1"><input type="text" class="value-input part-comments py-1 bg-white" value="${data[2]}"></td>
                 <td class="text-center"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
             `;
             partsListBody.appendChild(row);
@@ -455,8 +452,6 @@
             }
         });
 
-
-        // --- Signature Modal Logic ---
         const signatureModal = document.getElementById('signature-modal');
         const modalCanvas = document.getElementById('modal-signature-canvas');
         const modalSignaturePad = new SignaturePad(modalCanvas);
@@ -500,8 +495,6 @@
         document.getElementById('modal-cancel-button').addEventListener('click', () => signatureModal.classList.add('hidden'));
         document.getElementById('modal-clear-button').addEventListener('click', () => modalSignaturePad.clear());
 
-
-        // --- Main Form Initialization & Logic ---
         function resizeFormCanvases() {
             [ownerCanvas, agcCanvas].forEach(canvas => {
                 if (!canvas) return;
@@ -522,12 +515,12 @@
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
             row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
+                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5 bg-white" value="${data[0]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5 bg-white" value="${data[1]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5 bg-white" value="${data[2]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5 bg-white" value="${data[3]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5 bg-white" value="${data[4]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5 bg-white" value="${data[5]}" maxlength="50"></td>`;
             techLogBody.appendChild(row);
         };
         
@@ -549,7 +542,6 @@
             if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
             if (jobData.workCompleted) {
                 document.getElementById('workCompleted').value = jobData.workCompleted;
-                updateWatermark();
             }
             if (jobData.additionalParts) {
                 document.getElementById('additionalParts').value = jobData.additionalParts;
@@ -586,7 +578,6 @@
         resizeFormCanvases();
         updateWatermark();
 
-
         const setupCharacterCounter = (textareaId, counterId) => {
             const textarea = document.getElementById(textareaId);
             const counter = document.getElementById(counterId);
@@ -609,7 +600,6 @@
             window.location.href = window.location.pathname + '?data=' + encodedData;
         });
 
-        // --- Finalize and Submit Logic ---
         document.getElementById('submit-button').addEventListener('click', () => {
             const form = document.getElementById('worksheet-form');
             if (!form.checkValidity()) {
