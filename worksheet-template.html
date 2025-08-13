@@ -69,38 +69,38 @@
         label {
             font-size: 0.7rem; /* Smaller labels */
         }
+        
+        .final-text {
+            font-size: 0.75rem;
+            min-height: 28px; /* Match height of original inputs */
+            padding-top: 0.375rem; /* Align text vertically */
+        }
+        
+        .final-text-area {
+             font-size: 0.75rem;
+             white-space: pre-wrap; /* Preserve line breaks from textarea */
+        }
+
 
         /* --- PRINT STYLES --- */
         @media print {
-            /* Hide scrollbars and set base font size for printing */
             body {
                 background-color: white;
                 font-size: 10pt;
             }
             
-            /* Remove screen styles and prepare page for printing */
             .page {
                 margin: 0;
                 padding: 0;
                 box-shadow: none;
                 width: 100%;
                 height: 100%;
-                
-                /* The magic happens here: scale down the whole page */
                 transform: scale(0.95);
                 transform-origin: top left;
             }
 
-            /* Hide buttons and other non-printable elements */
-            #controls, #submit-button {
+            #controls {
                 display: none !important;
-            }
-            
-            /* Remove borders from inputs/textareas after submission */
-            .no-print-border {
-                border: none !important;
-                box-shadow: none !important;
-                background-color: transparent !important;
             }
         }
     </style>
@@ -268,11 +268,11 @@
                         </div>
                         <div>
                             <label class="block font-medium text-gray-600">Signature</label>
-                            <div class="mt-1 relative">
+                            <div id="signature-container" class="mt-1 relative">
                                 <canvas id="signature-pad" class="signature-pad-canvas w-full h-20"></canvas>
                             </div>
                             <p id="signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
-                            <div class="flex items-center justify-end">
+                            <div id="clear-signature-container" class="flex items-center justify-end">
                                 <button type="button" id="clear-signature" class="text-xs text-gray-600 hover:text-blue-600">Clear</button>
                             </div>
                         </div>
@@ -398,34 +398,47 @@
                     signatureError.classList.add('hidden');
                 }
 
-                // --- Process Data for display ---
+                // --- NEW: Convert form to text-only report view ---
+                form.querySelectorAll('input, textarea, select').forEach(el => {
+                    // Get the value
+                    let value = el.value;
+                    if (el.tagName === 'SELECT') {
+                        value = el.options[el.selectedIndex].text;
+                    }
+                    
+                    // Create a new text element
+                    const textElement = document.createElement('p');
+                    
+                    // Add appropriate classes for styling
+                    if(el.tagName === 'TEXTAREA'){
+                        textElement.className = 'final-text-area';
+                    } else {
+                        textElement.className = 'final-text';
+                    }
+                    
+                    textElement.textContent = value || ' '; // Use a space for empty fields to maintain layout
+
+                    // Replace the input element with the new text element
+                    el.parentNode.replaceChild(textElement, el);
+                });
+
+
+                // --- Process Signature ---
                 const signatureDataUrl = signaturePad.toDataURL('image/png');
-                
-                // Replace the canvas with an image of the signature
                 const sigImage = document.createElement('img');
                 sigImage.src = signatureDataUrl;
                 sigImage.alt = "Owner's signature";
                 sigImage.classList.add('border', 'rounded-md', 'bg-white', 'w-full', 'h-20', 'object-contain');
-                canvas.parentNode.replaceChild(sigImage, canvas);
+                
+                // Replace signature pad with the image
+                document.getElementById('signature-container').innerHTML = '';
+                document.getElementById('signature-container').appendChild(sigImage);
+                document.getElementById('clear-signature-container').remove();
 
-                // Show the print button
-                printButton.classList.remove('hidden');
 
-                // --- Disable Form and convert to "report view" ---
+                // --- Final UI Changes ---
                 submitButton.style.display = 'none'; // Hide submit button
-                clearButton.style.display = 'none'; // Hide clear button
-                form.querySelectorAll('input, textarea, select').forEach(el => {
-                    // Don't disable already readonly fields again, just style them
-                    if (!el.hasAttribute('readonly')) {
-                         el.setAttribute('readonly', true);
-                    }
-                    el.classList.add('no-print-border'); // Add class to remove borders for printing
-                    el.style.border = 'none';
-                    el.style.backgroundColor = 'transparent';
-                    el.style.boxShadow = 'none';
-                    el.style.paddingLeft = '0';
-                    el.style.paddingRight = '0';
-                });
+                printButton.classList.remove('hidden'); // Show the print button
             });
         });
     </script>
