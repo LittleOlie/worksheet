@@ -18,7 +18,7 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            min-height: 297mm;
+            height: auto; /* Changed from min-height to prevent blank page */
             padding: 1cm;
         }
         .label-text {
@@ -70,7 +70,7 @@
                 width: 100%;
                 height: 100%;
             }
-            #controls { display: none !important; }
+            #controls, #add-log-entry-button { display: none !important; }
             
             /* PDF/Print layout: apply the boxes */
             .form-section {
@@ -103,7 +103,7 @@
                 <div class="col-span-7 form-section">
                     <div class="label-text">Job order number</div>
                     <input type="text" id="jobOrderNumber" readonly class="value-input">
-                    <div class="label-text mt-1">(TOW PRO INSTALLATION)</div>
+                    <div id="portOfCallDisplay" class="label-text mt-1 font-semibold text-gray-800"></div>
                 </div>
                 <div class="col-span-5 form-section">
                     <div class="label-text">Boat name / Client name</div>
@@ -121,11 +121,7 @@
 
             <!-- Second Row Section -->
             <div class="grid grid-cols-12 gap-2 mb-2">
-                <div class="col-span-7 form-section">
-                    <div class="label-text">Port of call / Place of work</div>
-                    <input type="text" id="portOfCall" readonly class="value-input">
-                </div>
-                <div class="col-span-5 form-section">
+                <div class="col-span-12 form-section">
                     <div class="label-text">Job status</div>
                     <input type="text" id="jobStatus" value="To be carried out" readonly class="value-input">
                 </div>
@@ -140,7 +136,7 @@
             <!-- Work Done / Comments Section -->
             <div class="form-section mb-2">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" rows="8" class="value-input"></textarea>
+                <textarea id="workDone" rows="8" class="value-input" maxlength="1000"></textarea>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="2" class="value-input"></textarea>
             </div>
@@ -162,6 +158,9 @@
                     </thead>
                     <tbody id="tech-log-body"></tbody>
                 </table>
+                <div class="text-right mt-1">
+                    <button type="button" id="add-log-entry-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded">Add Log Entry</button>
+                </div>
             </div>
             
             <!-- Office Use Section -->
@@ -196,7 +195,7 @@
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="agcPosition" class="value-input"></div>
                     <div class="mt-2">
                         <label class="label-text">Signature</label>
-                        <div id="agc-signature-container" class="h-12 bg-white rounded-md border"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                        <div id="agc-signature-container" class="h-12 rounded-md"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                         <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
                     </div>
                 </div>
@@ -205,7 +204,7 @@
                     <div class="mt-2"><label class="label-text">Name (In capital letters)</label><input type="text" id="ownerName" required class="value-input"></div>
                     <div class="mt-2"><label class="label-text">Position</label><input type="text" id="ownerPosition" required class="value-input"></div>
                     <div class="grid grid-cols-2 gap-2 mt-2">
-                        <div><label class="label-text">Signature</label><div id="owner-signature-container" class="h-12 bg-white rounded-md border"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div></div>
+                        <div><label class="label-text">Signature</label><div id="owner-signature-container" class="h-12 rounded-md"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div></div>
                         <div><label class="label-text">Date</label><input type="date" id="ownerDate" required class="value-input"></div>
                     </div>
                     <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
@@ -254,7 +253,7 @@
                     document.getElementById('clientName').value = jobData.clientName || '';
                     document.getElementById('contactName').value = jobData.contactName || '';
                     document.getElementById('phone').value = jobData.phone || '';
-                    document.getElementById('portOfCall').value = jobData.portOfCall || '';
+                    document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
                     document.getElementById('work-description').value = jobData.workDescription || '';
                 }
             } catch (error) {
@@ -262,11 +261,16 @@
             }
 
             const techLogBody = document.getElementById('tech-log-body');
-            for (let i = 0; i < 4; i++) {
+            const addLogEntryButton = document.getElementById('add-log-entry-button');
+
+            const addLogRow = () => {
                 const row = document.createElement('tr');
                 row.innerHTML = `<td class="p-1"><input type="date" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="time" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td><td class="p-1"><input type="text" class="value-input"></td>`;
                 techLogBody.appendChild(row);
-            }
+            };
+
+            addLogEntryButton.addEventListener('click', addLogRow);
+            addLogRow(); // Add one row by default
 
             document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
             document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
