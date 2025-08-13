@@ -19,7 +19,7 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            min-height: 297mm; /* Always maintain A4 height for screen view */
+            height: 297mm; /* Use fixed height for screen view as well */
             padding: 1cm;
         }
         .label-text {
@@ -72,10 +72,8 @@
                 box-shadow: none;
                 background: white;
                 width: 100%;
-                /* Enforce single-page printing by hiding any overflow. */
                 height: 100%;
                 overflow: hidden;
-                min-height: initial;
             }
             #controls, #add-log-entry-button { display: none !important; }
 
@@ -105,19 +103,19 @@
 <body>
 
     <div class="page">
-        <form id="worksheet-form" class="flex flex-col flex-grow">
+        <form id="worksheet-form" class="flex flex-col h-full">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
-                    <div class="form-section">
+                    <div class="form-section" style="height: 20mm;">
                         <div class="label-text">Job order number</div>
                         <input type="text" id="jobOrderNumber" readonly class="value-input">
                     </div>
-                    <div class="form-section">
+                    <div class="form-section" style="height: 20mm;">
                         <div class="label-text">Port of call / Place of work</div>
                         <div id="portOfCallDisplay" class="final-text"></div>
                     </div>
                 </div>
-                <div class="form-section">
+                <div class="form-section" style="height: 40mm;">
                     <div class="label-text">Boat name / Client name</div>
                     <input type="text" id="clientName" readonly class="value-input">
                     <div class="mt-2">
@@ -131,12 +129,12 @@
                 </div>
             </div>
 
-            <div class="form-section mb-2">
+            <div class="form-section mb-2" style="height: 25mm;">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <div class="form-section mb-2 flex flex-col flex-grow">
+            <div class="form-section mb-2 flex flex-col" style="height: 70mm;">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input flex-grow" style="resize: none;" maxlength="750"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
@@ -145,7 +143,7 @@
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <div class="form-section mb-2">
+            <div class="form-section mb-2" style="height: 35mm;">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -166,7 +164,7 @@
             </div>
 
             <div class="grid grid-cols-12 gap-2 mb-2">
-                <div class="col-span-8 form-section">
+                <div class="col-span-8 form-section" style="height: 20mm;">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
                         <div class="flex items-center space-x-2">
@@ -179,16 +177,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-span-4 form-section">
+                <div class="col-span-4 form-section" style="height: 20mm;">
                     <div class="label-text">Next port of call</div>
                     <input type="text" id="nextPort" class="value-input">
                 </div>
             </div>
 
-            <p class="text-center text-xs italic my-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
+            <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <div class="grid grid-cols-2 gap-2">
-                <div class="form-section">
+                <div class="form-section" style="height: 60mm;">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -203,11 +201,11 @@
                             <div id="clear-agc-signature-container" class="text-right"><button type="button" id="clear-agc-signature" class="text-xs text-blue-600">Clear</button></div>
                         </div>
                     </div>
-                    <div class="text-xs mt-4">
+                    <div class="text-xs mt-auto">
                         <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
-                <div class="form-section">
+                <div class="form-section flex flex-col" style="height: 60mm;">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
                      <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -229,7 +227,7 @@
             </div>
         </form>
 
-        <div class="pt-3 mt-auto" id="controls">
+        <div class="pt-3" id="controls">
             <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
             <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
         </div>
