@@ -37,7 +37,8 @@
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
             color: rgba(156, 163, 175, 0.15); 
-            font-size: 5rem;
+            /* MODIFIED: Font size reduced */
+            font-size: 5.5rem;
             font-weight: 800;
             text-align: center;
             white-space: nowrap;
@@ -70,6 +71,9 @@
             outline: 2px solid #3b82f6;
             border-color: transparent;
         }
+        input[type="date"]:not(:valid) {
+            color: transparent;
+        }
         .final-text {
             font-size: 0.8rem;
             font-weight: 500;
@@ -79,8 +83,7 @@
             min-height: 26px;
         }
         .final-text.work-done-final-view {
-            /* MODIFIED: Using height for a fixed size */
-            height: 285px;
+            height: 285px; /* Fixed height for 18 rows */
             overflow: hidden;
             padding-top: 4px;
             padding-bottom: 4px;
@@ -128,6 +131,7 @@
                 padding: 0.5cm;
                 border-radius: 0;
                 page-break-after: always;
+                page-break-inside: avoid;
             }
             .page:last-child {
                 page-break-after: auto;
@@ -469,10 +473,9 @@
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
             const dateValue = data[0];
-            const dateType = dateValue ? 'date' : 'text';
-
+            
             row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="${dateType}" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" placeholder=" " class="value-input log-date py-0.5" value="${dateValue}"></td>
+                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${dateValue}"></td>
                 <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
@@ -621,6 +624,12 @@
                 return;
             }
             document.getElementById('owner-signature-error').classList.add('hidden');
+
+            // MODIFIED: Update title before printing
+            const jobOrderNumber = document.getElementById('jobOrderNumber').value;
+            if (jobOrderNumber) {
+                document.title = `Job Sheet - ${jobOrderNumber}`;
+            }
 
             document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove());
 
