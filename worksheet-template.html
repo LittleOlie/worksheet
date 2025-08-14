@@ -37,7 +37,6 @@
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
             color: rgba(156, 163, 175, 0.15); 
-            /* MODIFIED: Font size reduced */
             font-size: 5.5rem;
             font-weight: 800;
             text-align: center;
@@ -130,8 +129,11 @@
                 overflow: hidden;
                 padding: 0.5cm;
                 border-radius: 0;
-                page-break-after: always;
                 page-break-inside: avoid;
+            }
+            /* MODIFIED: More specific page-break rule to prevent extra pages */
+            #main-page.has-parts-page {
+                page-break-after: always;
             }
             .page:last-child {
                 page-break-after: auto;
@@ -410,6 +412,8 @@
         function handlePartsPageVisibility() {
             const shouldBeVisible = additionalPartsSelect.value === 'Yes';
             partsPage.classList.toggle('hidden', !shouldBeVisible);
+            // MODIFIED: Add/remove class to main page for print control
+            document.getElementById('main-page').classList.toggle('has-parts-page', shouldBeVisible);
             if (shouldBeVisible && partsListBody.children.length === 0) {
                 addPartRow();
             }
@@ -625,7 +629,6 @@
             }
             document.getElementById('owner-signature-error').classList.add('hidden');
 
-            // MODIFIED: Update title before printing
             const jobOrderNumber = document.getElementById('jobOrderNumber').value;
             if (jobOrderNumber) {
                 document.title = `Job Sheet - ${jobOrderNumber}`;
