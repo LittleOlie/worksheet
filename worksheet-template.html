@@ -22,7 +22,6 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            /* MODIFIED: Reduced padding for a more compact layout */
             padding: 0.8cm;
             min-height: 297mm; /* Fixed A4 height */
             position: relative; 
@@ -80,7 +79,9 @@
             min-height: 26px;
         }
         .final-text.work-done-final-view {
-            min-height: 317px;
+            /* MODIFIED: Using height for a fixed size */
+            height: 285px;
+            overflow: hidden;
             padding-top: 4px;
             padding-bottom: 4px;
             display: block;
@@ -142,8 +143,8 @@
             }
             .value-input { border: none !important; }
             .final-text { padding: 1px 0 !important; }
-            .gap-2 { gap: 0.25rem !important; }
-            .mb-2 { margin-bottom: 0.25rem !important; }
+            .gap-1 { gap: 0.25rem !important; }
+            .mb-1 { margin-bottom: 0.25rem !important; }
         }
     </style>
 </head>
@@ -154,8 +155,8 @@
         
         <form id="worksheet-form" class="flex flex-col h-full">
             <!-- Header and Client Info -->
-            <div class="grid grid-cols-2 gap-2 mb-1">
-                <div class="flex flex-col gap-2">
+            <div class="grid grid-cols-2 gap-1 mb-1">
+                <div class="flex flex-col gap-1">
                     <div class="form-section">
                         <div class="label-text">Job order number</div>
                         <input type="text" id="jobOrderNumber" readonly class="value-input">
@@ -187,10 +188,10 @@
             <!-- Work Done & Comments -->
             <div class="form-section mb-1 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="20" style="resize: none;" maxlength="950"></textarea>
+                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="950"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
-                <textarea id="techComments" rows="2" class="value-input" style="resize: none;" maxlength="250"></textarea>
+                <textarea id="techComments" rows="2" class="value-input" style="resize: none; overflow: hidden;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
@@ -213,7 +214,7 @@
             </div>
 
             <!-- Office Use -->
-            <div class="grid grid-cols-12 gap-2 mb-1">
+            <div class="grid grid-cols-12 gap-1 mb-1">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
@@ -236,10 +237,10 @@
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
             <!-- Signatures -->
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-2 gap-1">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-1">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
                             <input type="text" id="agcName" class="value-input">
@@ -248,7 +249,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-14 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-10 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="agc" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
                                 <button type="button" id="clear-agc-signature" class="text-blue-600 hover:underline">Clear</button>
@@ -261,7 +262,7 @@
                 </div>
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
-                     <div class="grid grid-cols-2 gap-2">
+                     <div class="grid grid-cols-2 gap-1">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
                             <input type="text" id="ownerName" required class="value-input">
@@ -272,7 +273,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-14 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-10 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="owner" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
@@ -282,14 +283,13 @@
                     </div>
                 </div>
             </div>
+            
+            <div id="controls" class="pt-4">
+                <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
+                <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
+                <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
+            </div>
         </form>
-
-        <!-- MODIFIED: Controls are now inside the page div to be at the bottom -->
-        <div id="controls" class="pt-4">
-            <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
-            <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
-            <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
-        </div>
     </div>
 
     <!-- ## SECOND PAGE FOR PARTS ## -->
@@ -322,7 +322,6 @@
 
 
     <!-- ## MODALS ## -->
-    <!-- Signature Modal -->
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
             <div class="p-4 border-b"><h3 class="text-lg font-medium">Please Sign Below</h3></div>
@@ -335,7 +334,6 @@
         </div>
     </div>
     
-    <!-- Barcode Scanner Modal -->
     <div id="scanner-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
             <div class="p-4 border-b flex justify-between items-center">
@@ -474,7 +472,7 @@
             const dateType = dateValue ? 'date' : 'text';
 
             row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="${dateType}" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" class="value-input log-date py-0.5" value="${dateValue}"></td>
+                <td class="pr-2 py-0.5"><input type="${dateType}" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" placeholder=" " class="value-input log-date py-0.5" value="${dateValue}"></td>
                 <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
@@ -623,6 +621,23 @@
                 return;
             }
             document.getElementById('owner-signature-error').classList.add('hidden');
+
+            document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove());
+
+            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => {
+                let value = el.value;
+                if (el.tagName === 'SELECT') {
+                    value = el.options[el.selectedIndex].text;
+                }
+                const textElement = document.createElement('div');
+                textElement.className = 'final-text';
+
+                if (el.id === 'workDone') textElement.classList.add('work-done-final-view');
+                if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view');
+
+                textElement.textContent = value || ' ';
+                el.parentNode.replaceChild(textElement, el);
+            });
 
             document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
             
