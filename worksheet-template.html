@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Version 6.3 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -36,7 +37,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
             color: rgba(156, 163, 175, 0.15); 
-            font-size: 8rem;
+            font-size: 4.5rem;
             font-weight: 800;
             text-align: center;
             white-space: nowrap;
@@ -59,9 +60,10 @@
             padding: 4px 8px;
             font-size: 0.8rem;
             font-weight: 500;
+            /* MODIFIED: Set background to transparent to show watermark */
+            background-color: transparent;
         }
         .value-input[readonly] {
-            background-color: #f9fafb;
             cursor: not-allowed;
             border-color: transparent;
         }
@@ -97,7 +99,6 @@
             position: relative;
             z-index: 1;
         }
-        /* ADDED: Rule to make barcode scale down */
         .barcode-display {
             max-width: 100%;
             height: auto;
@@ -133,9 +134,9 @@
             #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn { display: none !important; }
             .hidden { display: none !important; }
             .form-section {
-                border: 1px solid black !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 8px !important;
                 background-color: transparent !important;
-                border-radius: 0 !important;
                 padding: 0.25rem 0.5rem !important;
                 page-break-inside: avoid;
             }
@@ -152,6 +153,7 @@
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
         
         <form id="worksheet-form" class="flex flex-col h-full">
+            <!-- Header and Client Info -->
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
@@ -177,11 +179,13 @@
                 </div>
             </div>
 
+            <!-- Work Description -->
             <div class="form-section mb-2">
                 <div class="label-text mb-1">Work Description</div>
                 <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
+            <!-- Work Done & Comments -->
             <div class="form-section mb-2 flex flex-col">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input" rows="20" style="resize: none;" maxlength="950"></textarea>
@@ -191,6 +195,7 @@
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
+            <!-- Technician Log -->
             <div class="form-section mb-2">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
@@ -208,6 +213,7 @@
                 </table>
             </div>
 
+            <!-- Office Use -->
             <div class="grid grid-cols-12 gap-2 mb-2">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
@@ -230,6 +236,7 @@
 
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
+            <!-- Signatures -->
             <div class="grid grid-cols-2 gap-2">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
@@ -279,6 +286,7 @@
         </form>
     </div>
 
+    <!-- ## SECOND PAGE FOR PARTS ## -->
     <div id="parts-page" class="page hidden">
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
 
@@ -307,12 +315,14 @@
     </div>
 
 
+    <!-- ## CONTROLS, MODALS ## -->
     <div id="controls" class="w-[210mm] mx-auto p-4 sticky bottom-0 bg-white shadow-lg">
         <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
         <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
         <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
     </div>
 
+    <!-- Signature Modal -->
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
             <div class="p-4 border-b"><h3 class="text-lg font-medium">Please Sign Below</h3></div>
@@ -325,6 +335,7 @@
         </div>
     </div>
     
+    <!-- Barcode Scanner Modal -->
     <div id="scanner-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
             <div class="p-4 border-b flex justify-between items-center">
@@ -430,12 +441,12 @@
             for (let i = 1; i <= 50; i++) {
                 quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`;
             }
-            const quantitySelect = `<select class="value-input part-quantity py-1 bg-white">${quantityOptions}</select>`;
+            const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`;
 
             row.innerHTML = `
                 <td class="pr-2 py-1 align-middle">
                     <div class="flex items-center">
-                        <input type="text" class="value-input part-number py-1 bg-white" value="${data[0]}">
+                        <input type="text" class="value-input part-number py-1" value="${data[0]}">
                         <button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -446,7 +457,7 @@
                 </td>
                 <td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td>
                 <td class="pr-2 py-1 align-middle">${quantitySelect}</td>
-                <td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1 bg-white" value="${data[2]}"></td>
+                <td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td>
                 <td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
             `;
             partsListBody.appendChild(row);
@@ -460,12 +471,12 @@
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
             row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5 bg-white" value="${data[0]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5 bg-white" value="${data[1]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5 bg-white" value="${data[2]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5 bg-white" value="${data[3]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5 bg-white" value="${data[4]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5 bg-white" value="${data[5]}" maxlength="50"></td>`;
+                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
+                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
+                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
             techLogBody.appendChild(row);
         };
         
@@ -600,7 +611,19 @@
         });
 
         document.getElementById('submit-button').addEventListener('click', () => {
-            // Finalize and print logic here...
+             if (!document.getElementById('worksheet-form').checkValidity()) {
+                document.getElementById('worksheet-form').reportValidity();
+                return;
+            }
+            if (ownerSignaturePad.isEmpty()) {
+                document.getElementById('owner-signature-error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('owner-signature-error').classList.add('hidden');
+
+            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
+            
+            setTimeout(() => window.print(), 100);
         });
     });
     </script>
