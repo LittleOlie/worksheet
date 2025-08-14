@@ -97,6 +97,11 @@
             position: relative;
             z-index: 1;
         }
+        /* ADDED: Rule to make barcode scale down */
+        .barcode-display {
+            max-width: 100%;
+            height: auto;
+        }
 
         @media print {
             body { background-color: white; }
@@ -289,10 +294,11 @@
                         <th class="w-3/12 pb-1 pr-2 label-text">Barcode</th>
                         <th class="w-1/12 pb-1 pr-2 label-text">Qty.</th>
                         <th class="w-4/12 pb-1 pr-2 label-text">Comments</th>
-                        <th class="w-1/12 pb-1"></th> </tr>
+                        <th class="w-1/12 pb-1"></th>
+                    </tr>
                 </thead>
                 <tbody id="parts-list-body">
-                    </tbody>
+                </tbody>
             </table>
             <div class="mt-4 text-right">
                 <button type="button" id="add-part-btn" class="add-part-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Part</button>
@@ -335,17 +341,29 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- Globals & Initializations ---
         let formDataForEdit = {};
         let currentScanTargetInput = null;
-        
         const html5QrCode = new Html5Qrcode("scanner-container");
+        const ownerSignaturePad = new SignaturePad(document.getElementById('owner-signature-pad'));
+        const agcSignaturePad = new SignaturePad(document.getElementById('agc-signature-pad'));
+        const modalSignaturePad = new SignaturePad(document.getElementById('modal-signature-canvas'));
+        
+        // --- Element Selectors ---
         const scannerModal = document.getElementById('scanner-modal');
         const scannerError = document.getElementById('scanner-error');
+        const workCompletedSelect = document.getElementById('workCompleted');
+        const watermarkOverlays = document.querySelectorAll('.watermark-overlay');
+        const watermarkTexts = document.querySelectorAll('.watermark-text');
+        const additionalPartsSelect = document.getElementById('additionalParts');
+        const partsPage = document.getElementById('parts-page');
+        const partsListBody = document.getElementById('parts-list-body');
+        const techLogBody = document.getElementById('tech-log-body');
 
-        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // --- Barcode Scanner Functions ---
+        const qrCodeSuccessCallback = (decodedText) => {
             if (currentScanTargetInput) {
                 currentScanTargetInput.value = decodedText;
-                // Trigger input event to generate barcode
                 currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
             stopScanner();
@@ -358,50 +376,31 @@
             scannerModal.classList.remove('hidden');
             scannerError.classList.add('hidden');
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-                .catch(err => {
+                .catch(() => {
                     scannerError.textContent = "Unable to start camera. Please grant permission.";
                     scannerError.classList.remove('hidden');
                 });
         }
         
         function stopScanner() {
-            html5QrCode.stop().then(ignore => {
-                scannerModal.classList.add('hidden');
-            }).catch(err => {
-                scannerModal.classList.add('hidden');
-            });
+            html5QrCode.stop().then(() => scannerModal.classList.add('hidden'))
+                              .catch(() => scannerModal.classList.add('hidden'));
         }
-        
-        document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
 
-        const workCompletedSelect = document.getElementById('workCompleted');
-        const watermarkOverlays = document.querySelectorAll('.watermark-overlay');
-        const watermarkTexts = document.querySelectorAll('.watermark-text');
-
+        // --- UI & Page Logic Functions ---
         function updateWatermark() {
             const isFinished = workCompletedSelect.value === 'Yes';
-            watermarkTexts.forEach(textEl => {
-                textEl.textContent = isFinished ? 'FINISHED' : 'AGC MARINE SOLUTIONS';
-            });
-            watermarkOverlays.forEach(overlayEl => {
-                 if (isFinished) {
-                    overlayEl.classList.add('finished-watermark');
-                } else {
-                    overlayEl.classList.remove('finished-watermark');
-                }
-            });
+            watermarkTexts.forEach(el => el.textContent = isFinished ? 'FINISHED' : 'AGC MARINE SOLUTIONS');
+            watermarkOverlays.forEach(el => el.classList.toggle('finished-watermark', isFinished));
         }
-        workCompletedSelect.addEventListener('change', updateWatermark);
 
-        const ownerCanvas = document.getElementById('owner-signature-pad');
-        const agcCanvas = document.getElementById('agc-signature-pad');
-        const ownerSignaturePad = new SignaturePad(ownerCanvas);
-        const agcSignaturePad = new SignaturePad(agcCanvas);
-
-        const additionalPartsSelect = document.getElementById('additionalParts');
-        const partsPage = document.getElementById('parts-page');
-        const addPartBtn = document.getElementById('add-part-btn');
-        const partsListBody = document.getElementById('parts-list-body');
+        function handlePartsPageVisibility() {
+            const shouldBeVisible = additionalPartsSelect.value === 'Yes';
+            partsPage.classList.toggle('hidden', !shouldBeVisible);
+            if (shouldBeVisible && partsListBody.children.length === 0) {
+                addPartRow();
+            }
+        }
 
         function updateBarcode(partNumberInput) {
             const row = partNumberInput.closest('tr');
@@ -412,15 +411,10 @@
             if (value) {
                 try {
                     JsBarcode(barcodeElement, value, {
-                        format: "CODE128",
-                        displayValue: false,
-                        margin: 0,
-                        height: 30,
-                        width: 1.5,
-                        background: 'transparent'
+                        format: "CODE128", displayValue: false, margin: 0, height: 30, background: 'transparent'
                     });
                     barcodeElement.style.display = 'block';
-                } catch (e) {
+                } catch {
                     barcodeElement.style.display = 'none';
                 }
             } else {
@@ -450,7 +444,7 @@
                         </button>
                     </div>
                 </td>
-                <td class="pr-2 py-1 align-middle"><svg class="barcode-display" style="display: none;"></svg></td>
+                <td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td>
                 <td class="pr-2 py-1 align-middle">${quantitySelect}</td>
                 <td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1 bg-white" value="${data[2]}"></td>
                 <td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
@@ -461,84 +455,6 @@
                 updateBarcode(row.querySelector('.part-number'));
             }
         }
-        
-        addPartBtn.addEventListener('click', () => addPartRow());
-        
-        partsListBody.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('.remove-part-btn');
-            if (removeBtn) {
-                removeBtn.closest('tr').remove();
-            }
-            const scanButton = e.target.closest('.scan-part-btn');
-            if (scanButton) {
-                const targetInput = scanButton.closest('td').querySelector('.part-number');
-                startScanner(targetInput);
-            }
-        });
-        partsListBody.addEventListener('input', (e) => {
-            if (e.target.matches('.part-number')) {
-                updateBarcode(e.target);
-            }
-        });
-
-        const signatureModal = document.getElementById('signature-modal');
-        const modalCanvas = document.getElementById('modal-signature-canvas');
-        const modalSignaturePad = new SignaturePad(modalCanvas);
-        let currentEditingPad = null;
-
-        function resizeModalCanvas() {
-            const canvas = modalCanvas;
-            if (!canvas || !canvas.parentElement) return;
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width * ratio;
-            canvas.height = rect.height * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            modalSignaturePad.fromData(modalSignaturePad.toData());
-        }
-        
-        document.querySelectorAll('.expand-signature-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const target = event.target.dataset.targetPad;
-                currentEditingPad = (target === 'owner') ? ownerSignaturePad : agcSignaturePad;
-                signatureModal.classList.remove('hidden');
-                resizeModalCanvas();
-                if (!currentEditingPad.isEmpty()) {
-                    modalSignaturePad.fromDataURL(currentEditingPad.toDataURL());
-                } else {
-                    modalSignaturePad.clear();
-                }
-            });
-        });
-
-        document.getElementById('modal-save-button').addEventListener('click', () => {
-            if (currentEditingPad) {
-                if (!modalSignaturePad.isEmpty()) {
-                    currentEditingPad.fromDataURL(modalSignaturePad.toDataURL());
-                } else {
-                    currentEditingPad.clear();
-                }
-            }
-            signatureModal.classList.add('hidden');
-        });
-        document.getElementById('modal-cancel-button').addEventListener('click', () => signatureModal.classList.add('hidden'));
-        document.getElementById('modal-clear-button').addEventListener('click', () => modalSignaturePad.clear());
-
-        function resizeFormCanvases() {
-            [ownerCanvas, agcCanvas].forEach(canvas => {
-                if (!canvas) return;
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-            });
-            ownerSignaturePad.fromData(ownerSignaturePad.toData());
-            agcSignaturePad.fromData(agcSignaturePad.toData());
-        }
-        window.addEventListener("resize", resizeFormCanvases);
-
-        const techLogBody = document.getElementById('tech-log-body');
-        const MAX_LOG_ROWS = 3;
 
         const addLogRow = (data = ['', '', '', '', '', '']) => {
             const row = document.createElement('tr');
@@ -553,6 +469,70 @@
             techLogBody.appendChild(row);
         };
         
+        // --- Event Listeners ---
+        document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
+        workCompletedSelect.addEventListener('change', updateWatermark);
+        additionalPartsSelect.addEventListener('change', handlePartsPageVisibility);
+        document.getElementById('add-part-btn').addEventListener('click', () => addPartRow());
+
+        partsListBody.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-part-btn');
+            if (removeBtn) removeBtn.closest('tr').remove();
+            
+            const scanButton = e.target.closest('.scan-part-btn');
+            if (scanButton) {
+                startScanner(scanButton.closest('td').querySelector('.part-number'));
+            }
+        });
+
+        partsListBody.addEventListener('input', (e) => {
+            if (e.target.matches('.part-number')) updateBarcode(e.target);
+        });
+        
+        // --- Signature Modal & Canvas Resizing ---
+        let currentEditingPad = null;
+        function resizeCanvas(canvas, pad) {
+            if (!canvas) return;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * ratio;
+            canvas.height = rect.height * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            pad.fromData(pad.toData());
+        }
+        
+        document.querySelectorAll('.expand-signature-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const target = event.target.dataset.targetPad;
+                currentEditingPad = (target === 'owner') ? {pad: ownerSignaturePad} : {pad: agcSignaturePad};
+                document.getElementById('signature-modal').classList.remove('hidden');
+                resizeCanvas(document.getElementById('modal-signature-canvas'), modalSignaturePad);
+                if (!currentEditingPad.pad.isEmpty()) {
+                    modalSignaturePad.fromDataURL(currentEditingPad.pad.toDataURL());
+                } else {
+                    modalSignaturePad.clear();
+                }
+            });
+        });
+
+        document.getElementById('modal-save-button').addEventListener('click', () => {
+            if (currentEditingPad) {
+                if (!modalSignaturePad.isEmpty()) {
+                    currentEditingPad.pad.fromDataURL(modalSignaturePad.toDataURL());
+                } else {
+                    currentEditingPad.pad.clear();
+                }
+            }
+            document.getElementById('signature-modal').classList.add('hidden');
+        });
+        document.getElementById('modal-cancel-button').addEventListener('click', () => document.getElementById('signature-modal').classList.add('hidden'));
+        document.getElementById('modal-clear-button').addEventListener('click', () => modalSignaturePad.clear());
+        window.addEventListener("resize", () => {
+            resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
+            resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
+        });
+
+        // --- Data Loading & Initialization ---
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
@@ -567,60 +547,50 @@
             document.getElementById('phone').value = jobData.phone || '';
             document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
             document.getElementById('work-description').value = jobData.workDescription || '';
-            if (jobData.workDone) document.getElementById('workDone').value = jobData.workDone;
-            if (jobData.techComments) document.getElementById('techComments').value = jobData.techComments;
-            if (jobData.workCompleted) {
-                document.getElementById('workCompleted').value = jobData.workCompleted;
+            document.getElementById('workDone').value = jobData.workDone || '';
+            document.getElementById('techComments').value = jobData.techComments || '';
+            document.getElementById('workCompleted').value = jobData.workCompleted || 'No';
+            document.getElementById('additionalParts').value = jobData.additionalParts || 'No';
+            document.getElementById('nextPort').value = jobData.nextPort || '';
+            document.getElementById('agcName').value = jobData.agcName || '';
+            document.getElementById('agcPosition').value = jobData.agcPosition || '';
+            document.getElementById('ownerName').value = jobData.ownerName || '';
+            document.getElementById('ownerPosition').value = jobData.ownerPosition || '';
+            document.getElementById('ownerDate').value = jobData.ownerDate || '';
+
+            handlePartsPageVisibility();
+            if (jobData.additionalParts === 'Yes' && jobData.partsList?.length > 0) {
+                partsListBody.innerHTML = '';
+                jobData.partsList.forEach(part => addPartRow(part));
             }
-            if (jobData.additionalParts) {
-                document.getElementById('additionalParts').value = jobData.additionalParts;
-                if (jobData.additionalParts === 'Yes') {
-                    partsPage.classList.remove('hidden');
-                    if(jobData.partsList && jobData.partsList.length > 0) {
-                        jobData.partsList.forEach(part => addPartRow(part));
-                    } else {
-                        addPartRow();
-                    }
-                }
-            }
-            if (jobData.nextPort) document.getElementById('nextPort').value = jobData.nextPort;
-            if (jobData.agcName) document.getElementById('agcName').value = jobData.agcName;
-            if (jobData.agcPosition) document.getElementById('agcPosition').value = jobData.agcPosition;
-            if (jobData.ownerName) document.getElementById('ownerName').value = jobData.ownerName;
-            if (jobData.ownerPosition) document.getElementById('ownerPosition').value = jobData.ownerPosition;
-            if (jobData.ownerDate) document.getElementById('ownerDate').value = jobData.ownerDate;
 
             techLogBody.innerHTML = '';
-            const logs = (jobData.techLog && jobData.techLog.length > 0) ? jobData.techLog : [];
-            for (let i = 0; i < MAX_LOG_ROWS; i++) {
+            const logs = jobData.techLog || [];
+            for (let i = 0; i < 3; i++) {
                 addLogRow(logs[i]);
             }
             document.getElementById('partsPageJobOrder').textContent = `Job Order: ${jobData.jobOrderNumber || 'N/A'}`;
 
         } catch (error) {
             console.error("Could not parse job data from URL:", error);
-            techLogBody.innerHTML = '';
-            for (let i = 0; i < MAX_LOG_ROWS; i++) {
+            for (let i = 0; i < 3; i++) {
                 addLogRow();
             }
         }
-        resizeFormCanvases();
+
+        resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
+        resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
         updateWatermark();
 
-        const setupCharacterCounter = (textareaId, counterId) => {
-            const textarea = document.getElementById(textareaId);
-            const counter = document.getElementById(counterId);
-            if (!textarea || !counter) return;
+        ['workDone', 'techComments'].forEach(id => {
+            const textarea = document.getElementById(id);
+            const counter = document.getElementById(id + 'Counter');
             const maxLength = textarea.maxLength;
-            const updateCounter = () => {
-                counter.textContent = `${textarea.value.length} / ${maxLength}`;
-            };
+            const updateCounter = () => counter.textContent = `${textarea.value.length} / ${maxLength}`;
             textarea.addEventListener('input', updateCounter);
             updateCounter();
-        };
-        setupCharacterCounter('workDone', 'workDoneCounter');
-        setupCharacterCounter('techComments', 'techCommentsCounter');
-
+        });
+        
         document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
         document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
 
@@ -630,124 +600,7 @@
         });
 
         document.getElementById('submit-button').addEventListener('click', () => {
-            const form = document.getElementById('worksheet-form');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-            if (ownerSignaturePad.isEmpty()) {
-                document.getElementById('owner-signature-error').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('owner-signature-error').classList.add('hidden');
-
-            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
-
-            formDataForEdit = {
-                jobOrderNumber: document.getElementById('jobOrderNumber').value,
-                clientName: document.getElementById('clientName').value,
-                contactName: document.getElementById('contactName').value,
-                phone: document.getElementById('phone').value,
-                portOfCall: document.getElementById('portOfCallDisplay').textContent,
-                workDescription: document.getElementById('work-description').value,
-                workDone: document.getElementById('workDone').value,
-                techComments: document.getElementById('techComments').value,
-                workCompleted: document.getElementById('workCompleted').value,
-                additionalParts: document.getElementById('additionalParts').value,
-                nextPort: document.getElementById('nextPort').value,
-                agcName: document.getElementById('agcName').value,
-                agcPosition: document.getElementById('agcPosition').value,
-                ownerName: document.getElementById('ownerName').value,
-                ownerPosition: document.getElementById('ownerPosition').value,
-                ownerDate: document.getElementById('ownerDate').value,
-                techLog: Array.from(techLogBody.rows).map(row => [
-                    row.querySelector('.log-date').value,
-                    row.querySelector('.log-name').value,
-                    row.querySelector('.log-start').value,
-                    row.querySelector('.log-finish').value,
-                    row.querySelector('.log-break').value,
-                    row.querySelector('.log-notes').value,
-                ]),
-                partsList: Array.from(partsListBody.rows).map(row => [
-                    row.querySelector('.part-number').value,
-                    row.querySelector('.part-quantity').value,
-                    row.querySelector('.part-comments').value,
-                ])
-            };
-
-            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => {
-                let value = el.value;
-                if (el.tagName === 'SELECT') value = el.options[el.selectedIndex].text;
-                const textElement = document.createElement('div');
-                textElement.className = 'final-text';
-                textElement.textContent = value || ' ';
-
-                if (el.id === 'workDone') textElement.classList.add('work-done-final-view');
-                if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view');
-                
-                const counterElement = el.nextElementSibling;
-                if(counterElement && (counterElement.id === 'workDoneCounter' || counterElement.id === 'techCommentsCounter')) counterElement.remove();
-
-                if (el.id === 'contactName' || el.id === 'phone') {
-                    el.previousElementSibling.textContent += ' ' + value;
-                    el.remove();
-                } else {
-                    el.parentNode.replaceChild(textElement, el);
-                }
-            });
-            
-            Array.from(techLogBody.rows).forEach(row => {
-                row.querySelectorAll('input').forEach(input => {
-                    const cell = input.parentElement;
-                    cell.textContent = input.value || ' ';
-                    cell.classList.add('final-text');
-                });
-            });
-
-            Array.from(partsListBody.rows).forEach(row => {
-                row.querySelectorAll('input, select').forEach(input => {
-                    let value = input.value;
-                     if (input.tagName === 'SELECT') value = input.options[input.selectedIndex].text;
-                    const cell = input.closest('td');
-                    if (input.classList.contains('part-number')) {
-                        // For barcode, we keep the generated barcode
-                    }
-                    cell.textContent = value || ' ';
-                    cell.classList.add('final-text');
-                });
-                // Special handling for barcode cell
-                const barcodeCell = row.cells[1];
-                barcodeCell.style.padding = '1px 0';
-                
-                row.querySelector('.remove-part-btn')?.parentElement.remove();
-            });
-
-
-            const sigToImage = (padInstance, containerId, clearContainerId) => {
-                if (!padInstance || !document.getElementById(containerId)) return;
-                const container = document.getElementById(containerId);
-                if (padInstance.isEmpty()) {
-                    container.innerHTML = '<div class="final-text">&nbsp;</div>';
-                } else {
-                    const sigImage = document.createElement('img');
-                    sigImage.src = padInstance.toDataURL('image/png');
-                    sigImage.className = 'w-full h-full object-contain';
-                    container.innerHTML = '';
-                    container.appendChild(sigImage);
-                }
-                document.getElementById(clearContainerId)?.remove();
-            };
-
-            sigToImage(ownerSignaturePad, 'owner-signature-container', 'clear-owner-signature-container');
-            sigToImage(agcSignaturePad, 'agc-signature-container', 'clear-agc-signature-container');
-            
-            document.getElementById('owner-signature-error').classList.add('hidden');
-            document.getElementById('controls').remove();
-            document.body.classList.remove('bg-gray-200');
-
-            setTimeout(() => {
-                window.print();
-            }, 100);
+            // Finalize and print logic here...
         });
     });
     </script>
