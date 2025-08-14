@@ -22,7 +22,8 @@
             margin: 1rem auto;
             box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
             width: 210mm;
-            padding: 1cm;
+            /* MODIFIED: Reduced padding for a more compact layout */
+            padding: 0.8cm;
             min-height: 297mm; /* Fixed A4 height */
             position: relative; 
             overflow: hidden; 
@@ -37,7 +38,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
             color: rgba(156, 163, 175, 0.15); 
-            font-size: 4.5rem;
+            font-size: 5rem;
             font-weight: 800;
             text-align: center;
             white-space: nowrap;
@@ -60,7 +61,6 @@
             padding: 4px 8px;
             font-size: 0.8rem;
             font-weight: 500;
-            /* MODIFIED: Set background to transparent to show watermark */
             background-color: transparent;
         }
         .value-input[readonly] {
@@ -86,7 +86,7 @@
             display: block;
         }
         .final-text.tech-comments-final-view {
-            min-height: 54px;
+            min-height: 38px;
             padding-top: 4px;
             padding-bottom: 4px;
             display: block;
@@ -154,7 +154,7 @@
         
         <form id="worksheet-form" class="flex flex-col h-full">
             <!-- Header and Client Info -->
-            <div class="grid grid-cols-2 gap-2 mb-2">
+            <div class="grid grid-cols-2 gap-2 mb-1">
                 <div class="flex flex-col gap-2">
                     <div class="form-section">
                         <div class="label-text">Job order number</div>
@@ -179,24 +179,23 @@
                 </div>
             </div>
 
-            <!-- Work Description -->
-            <div class="form-section mb-2">
-                <div class="label-text mb-1">Work Description</div>
-                <textarea id="work-description" readonly rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
+            <div class="form-section mb-1">
+                <div class="label-text">Work Description</div>
+                <textarea id="work-description" readonly rows="1" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
             <!-- Work Done & Comments -->
-            <div class="form-section mb-2 flex flex-col">
+            <div class="form-section mb-1 flex flex-col">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input" rows="20" style="resize: none;" maxlength="950"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
-                <textarea id="techComments" rows="3" class="value-input" style="resize: none;" maxlength="250"></textarea>
+                <textarea id="techComments" rows="2" class="value-input" style="resize: none;" maxlength="250"></textarea>
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
             <!-- Technician Log -->
-            <div class="form-section mb-2">
+            <div class="form-section mb-1">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
                     <thead>
@@ -214,7 +213,7 @@
             </div>
 
             <!-- Office Use -->
-            <div class="grid grid-cols-12 gap-2 mb-2">
+            <div class="grid grid-cols-12 gap-2 mb-1">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
                     <div class="flex space-x-4 mt-1">
@@ -249,7 +248,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-14 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="agc" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
                                 <button type="button" id="clear-agc-signature" class="text-blue-600 hover:underline">Clear</button>
@@ -273,7 +272,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-14 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="owner" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
@@ -284,6 +283,13 @@
                 </div>
             </div>
         </form>
+
+        <!-- MODIFIED: Controls are now inside the page div to be at the bottom -->
+        <div id="controls" class="pt-4">
+            <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
+            <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
+            <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
+        </div>
     </div>
 
     <!-- ## SECOND PAGE FOR PARTS ## -->
@@ -315,13 +321,7 @@
     </div>
 
 
-    <!-- ## CONTROLS, MODALS ## -->
-    <div id="controls" class="w-[210mm] mx-auto p-4 sticky bottom-0 bg-white shadow-lg">
-        <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
-        <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
-        <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
-    </div>
-
+    <!-- ## MODALS ## -->
     <!-- Signature Modal -->
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
@@ -470,8 +470,11 @@
         const addLogRow = (data = ['', '', '', '', '', '']) => {
             const row = document.createElement('tr');
             row.className = 'border-b last:border-b-0';
+            const dateValue = data[0];
+            const dateType = dateValue ? 'date' : 'text';
+
             row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${data[0]}"></td>
+                <td class="pr-2 py-0.5"><input type="${dateType}" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" class="value-input log-date py-0.5" value="${dateValue}"></td>
                 <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
                 <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
