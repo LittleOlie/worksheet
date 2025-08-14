@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Version 6.3 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -131,7 +130,6 @@
                 border-radius: 0;
                 page-break-inside: avoid;
             }
-            /* MODIFIED: More specific page-break rule to prevent extra pages */
             #main-page.has-parts-page {
                 page-break-after: always;
             }
@@ -160,7 +158,6 @@
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
         
         <form id="worksheet-form" class="flex flex-col h-full">
-            <!-- Header and Client Info -->
             <div class="grid grid-cols-2 gap-1 mb-1">
                 <div class="flex flex-col gap-1">
                     <div class="form-section">
@@ -191,7 +188,6 @@
                 <textarea id="work-description" readonly rows="1" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
-            <!-- Work Done & Comments -->
             <div class="form-section mb-1 flex flex-col">
                 <div class="label-text">Work done</div>
                 <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="950"></textarea>
@@ -201,7 +197,6 @@
                 <div id="techCommentsCounter" class="text-xs text-right text-gray-500 pr-1"></div>
             </div>
 
-            <!-- Technician Log -->
             <div class="form-section mb-1">
                  <div class="label-text mb-1">Technician Log</div>
                 <table class="w-full text-left">
@@ -219,7 +214,6 @@
                 </table>
             </div>
 
-            <!-- Office Use -->
             <div class="grid grid-cols-12 gap-1 mb-1">
                 <div class="col-span-8 form-section">
                     <div class="label-text">For office use only</div>
@@ -242,7 +236,6 @@
 
             <p class="text-center text-xs italic mt-auto mb-1">We the below signed agree that the information entered on this job sheet is a true and accurate description of the works carried out and the operational state of equipment on board the above named vessel at the date specified below</p>
 
-            <!-- Signatures -->
             <div class="grid grid-cols-2 gap-1">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
@@ -255,7 +248,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="agc-signature-container" class="h-10 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="agc-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="agc-signature-pad" class="w-full h-full"></canvas></div>
                             <div id="clear-agc-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="agc" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
                                 <button type="button" id="clear-agc-signature" class="text-blue-600 hover:underline">Clear</button>
@@ -279,7 +272,7 @@
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
-                            <div id="owner-signature-container" class="h-10 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
+                            <div id="owner-signature-container" class="h-16 rounded-md border border-gray-300 bg-white"><canvas id="owner-signature-pad" class="w-full h-full"></canvas></div>
                              <p id="owner-signature-error" class="text-red-500 text-xs mt-1 hidden">Please provide a signature.</p>
                              <div id="clear-owner-signature-container" class="flex justify-between items-center text-xs">
                                 <button type="button" data-target-pad="owner" class="expand-signature-button text-blue-600 hover:underline">Expand</button>
@@ -298,7 +291,6 @@
         </form>
     </div>
 
-    <!-- ## SECOND PAGE FOR PARTS ## -->
     <div id="parts-page" class="page hidden">
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
 
@@ -327,7 +319,6 @@
     </div>
 
 
-    <!-- ## MODALS ## -->
     <div id="signature-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-full max-h-[80vh] flex flex-col">
             <div class="p-4 border-b"><h3 class="text-lg font-medium">Please Sign Below</h3></div>
@@ -399,7 +390,7 @@
         
         function stopScanner() {
             html5QrCode.stop().then(() => scannerModal.classList.add('hidden'))
-                              .catch(() => scannerModal.classList.add('hidden'));
+                                     .catch(() => scannerModal.classList.add('hidden'));
         }
 
         // --- UI & Page Logic Functions ---
@@ -412,7 +403,6 @@
         function handlePartsPageVisibility() {
             const shouldBeVisible = additionalPartsSelect.value === 'Yes';
             partsPage.classList.toggle('hidden', !shouldBeVisible);
-            // MODIFIED: Add/remove class to main page for print control
             document.getElementById('main-page').classList.toggle('has-parts-page', shouldBeVisible);
             if (shouldBeVisible && partsListBody.children.length === 0) {
                 addPartRow();
@@ -577,6 +567,13 @@
             document.getElementById('ownerPosition').value = jobData.ownerPosition || '';
             document.getElementById('ownerDate').value = jobData.ownerDate || '';
 
+            if (jobData.agcSignature) {
+                agcSignaturePad.fromDataURL(jobData.agcSignature);
+            }
+            if (jobData.ownerSignature) {
+                ownerSignaturePad.fromDataURL(jobData.ownerSignature);
+            }
+
             handlePartsPageVisibility();
             if (jobData.additionalParts === 'Yes' && jobData.partsList?.length > 0) {
                 partsListBody.innerHTML = '';
@@ -622,12 +619,42 @@
              if (!document.getElementById('worksheet-form').checkValidity()) {
                 document.getElementById('worksheet-form').reportValidity();
                 return;
-            }
-            if (ownerSignaturePad.isEmpty()) {
-                document.getElementById('owner-signature-error').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('owner-signature-error').classList.add('hidden');
+             }
+             if (ownerSignaturePad.isEmpty()) {
+                 document.getElementById('owner-signature-error').classList.remove('hidden');
+                 return;
+             }
+             document.getElementById('owner-signature-error').classList.add('hidden');
+
+            formDataForEdit = {
+                jobOrderNumber: document.getElementById('jobOrderNumber').value,
+                clientName: document.getElementById('clientName').value,
+                contactName: document.getElementById('contactName').value,
+                phone: document.getElementById('phone').value,
+                portOfCall: document.getElementById('portOfCallDisplay').textContent,
+                workDescription: document.getElementById('work-description').value,
+                workDone: document.getElementById('workDone').value,
+                techComments: document.getElementById('techComments').value,
+                workCompleted: document.getElementById('workCompleted').value,
+                additionalParts: document.getElementById('additionalParts').value,
+                nextPort: document.getElementById('nextPort').value,
+                agcName: document.getElementById('agcName').value,
+                agcPosition: document.getElementById('agcPosition').value,
+                ownerName: document.getElementById('ownerName').value,
+                ownerPosition: document.getElementById('ownerPosition').value,
+                ownerDate: document.getElementById('ownerDate').value,
+                agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(),
+                ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(),
+                techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [
+                    row.querySelector('.log-date').value, row.querySelector('.log-name').value,
+                    row.querySelector('.log-start').value, row.querySelector('.log-finish').value,
+                    row.querySelector('.log-break').value, row.querySelector('.log-notes').value
+                ]),
+                partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [
+                    row.querySelector('.part-number').value, row.querySelector('.part-quantity').value,
+                    row.querySelector('.part-comments').value
+                ])
+            };
 
             const jobOrderNumber = document.getElementById('jobOrderNumber').value;
             if (jobOrderNumber) {
@@ -653,6 +680,21 @@
 
             document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
             
+            // MODIFIED: Hide submit button and create a floating bar for Print and Edit buttons
+            document.getElementById('submit-button').classList.add('hidden');
+
+            const controlsDiv = document.getElementById('controls');
+            // Remove original padding and add styles for the floating bar
+            controlsDiv.classList.remove('pt-4');
+            controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4');
+            
+            const printButton = document.getElementById('print-button');
+            const editButton = document.getElementById('edit-button');
+
+            // Show and adjust classes for the buttons to fit in the new flex bar
+            printButton.classList.remove('hidden', 'w-full', 'mt-2');
+            editButton.classList.remove('hidden', 'w-full', 'mt-2');
+
             setTimeout(() => window.print(), 100);
         });
     });
