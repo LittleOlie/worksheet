@@ -615,6 +615,11 @@
             window.location.href = window.location.pathname + '?data=' + encodedData;
         });
 
+        // MODIFIED: Added event listener for the print button
+        document.getElementById('print-button').addEventListener('click', () => {
+            window.print();
+        });
+
         document.getElementById('submit-button').addEventListener('click', () => {
              if (!document.getElementById('worksheet-form').checkValidity()) {
                 document.getElementById('worksheet-form').reportValidity();
@@ -680,18 +685,15 @@
 
             document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
             
-            // MODIFIED: Hide submit button and create a floating bar for Print and Edit buttons
             document.getElementById('submit-button').classList.add('hidden');
 
             const controlsDiv = document.getElementById('controls');
-            // Remove original padding and add styles for the floating bar
             controlsDiv.classList.remove('pt-4');
             controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4');
             
             const printButton = document.getElementById('print-button');
             const editButton = document.getElementById('edit-button');
 
-            // Show and adjust classes for the buttons to fit in the new flex bar
             printButton.classList.remove('hidden', 'w-full', 'mt-2');
             editButton.classList.remove('hidden', 'w-full', 'mt-2');
 
