@@ -396,7 +396,7 @@
         // --- UI & Page Logic Functions ---
         function updateWatermark() {
             const isFinished = workCompletedSelect.value === 'Yes';
-            watermarkTexts.forEach(el => el.textContent = isFinished ? 'FINISHED' : 'AGC MARINE SOLUTIONS');
+            watermarkTexts.forEach(el => el.textContent = isFinished ? 'AGC MARINE SOLUTIONS' : 'AGC MARINE SOLUTIONS');
             watermarkOverlays.forEach(el => el.classList.toggle('finished-watermark', isFinished));
         }
 
