@@ -273,11 +273,11 @@
                             <select id="ownerPosition" required class="value-input">
                                 <option>Captain</option>
                                 <option>Chief Engineer</option>
-                                <option>First Mate</option>
-                                <option>2nd Mate</option>
-                                <option>1st Engineer</option>
-                                <option>2nd Engineer</option>
                                 <option>ETO</option>
+                                <option>1st Eng.</option>
+                                <option>2nd Eng.</option>
+                                <option>1st Officer</option>
+                                <option>2nd Officer</option>
                                 <option>Deckhand</option>
                             </select>
                             <label class="label-text mt-2 block">Date</label>
@@ -575,9 +575,9 @@
             document.getElementById('additionalParts').value = jobData.additionalParts || 'No';
             document.getElementById('nextPort').value = jobData.nextPort || '';
             document.getElementById('agcName').value = jobData.agcName || '';
-            document.getElementById('agcPosition').value = jobData.agcPosition || '';
+            document.getElementById('agcPosition').value = jobData.agcPosition || 'Service Technician';
             document.getElementById('ownerName').value = jobData.ownerName || '';
-            document.getElementById('ownerPosition').value = jobData.ownerPosition || '';
+            document.getElementById('ownerPosition').value = jobData.ownerPosition || 'Captain';
             document.getElementById('ownerDate').value = jobData.ownerDate || '';
 
             if (jobData.agcSignature) {
@@ -628,7 +628,6 @@
             window.location.href = window.location.pathname + '?data=' + encodedData;
         });
 
-        // MODIFIED: Added event listener for the print button
         document.getElementById('print-button').addEventListener('click', () => {
             window.print();
         });
