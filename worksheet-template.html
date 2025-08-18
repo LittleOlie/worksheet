@@ -166,7 +166,7 @@
                     </div>
                     <div class="form-section">
                         <div class="label-text">Port of call / Place of work</div>
-                        <div id="portOfCallDisplay" class="final-text"></div>
+                        <input type="text" id="portOfCallDisplay" class="value-input">
                     </div>
                 </div>
                 <div class="form-section">
@@ -185,7 +185,7 @@
 
             <div class="form-section mb-1">
                 <div class="label-text">Work Description</div>
-                <textarea id="work-description" readonly rows="1" class="value-input w-full font-bold" style="resize: none;"></textarea>
+                <textarea id="work-description" rows="1" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
             <div class="form-section mb-1 flex flex-col">
@@ -567,7 +567,8 @@
             document.getElementById('clientName').value = jobData.clientName || '';
             document.getElementById('contactName').value = jobData.contactName || '';
             document.getElementById('phone').value = jobData.phone || '';
-            document.getElementById('portOfCallDisplay').textContent = jobData.portOfCall || '';
+            // MODIFIED: Set the value of the new input field instead of textContent
+            document.getElementById('portOfCallDisplay').value = jobData.portOfCall || '';
             document.getElementById('work-description').value = jobData.workDescription || '';
             document.getElementById('workDone').value = jobData.workDone || '';
             document.getElementById('techComments').value = jobData.techComments || '';
@@ -648,7 +649,8 @@
                 clientName: document.getElementById('clientName').value,
                 contactName: document.getElementById('contactName').value,
                 phone: document.getElementById('phone').value,
-                portOfCall: document.getElementById('portOfCallDisplay').textContent,
+                // MODIFIED: Read the value from the new input field
+                portOfCall: document.getElementById('portOfCallDisplay').value,
                 workDescription: document.getElementById('work-description').value,
                 workDone: document.getElementById('workDone').value,
                 techComments: document.getElementById('techComments').value,
