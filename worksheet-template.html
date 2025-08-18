@@ -244,7 +244,11 @@
                             <label class="label-text">Name (In capital letters)</label>
                             <input type="text" id="agcName" class="value-input">
                             <label class="label-text mt-2 block">Position</label>
-                            <input type="text" id="agcPosition" class="value-input">
+                            <select id="agcPosition" class="value-input">
+                                <option>Service Technician</option>
+                                <option>Manager</option>
+                                <option>Sales</option>
+                            </select>
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
@@ -266,7 +270,16 @@
                             <label class="label-text">Name (In capital letters)</label>
                             <input type="text" id="ownerName" required class="value-input">
                             <label class="label-text mt-2 block">Position</label>
-                            <input type="text" id="ownerPosition" required class="value-input">
+                            <select id="ownerPosition" required class="value-input">
+                                <option>Captain</option>
+                                <option>Chief Engineer</option>
+                                <option>First Mate</option>
+                                <option>2nd Mate</option>
+                                <option>1st Engineer</option>
+                                <option>2nd Engineer</option>
+                                <option>ETO</option>
+                                <option>Deckhand</option>
+                            </select>
                             <label class="label-text mt-2 block">Date</label>
                             <input type="date" id="ownerDate" required class="value-input">
                         </div>
