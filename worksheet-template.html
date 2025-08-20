@@ -239,6 +239,7 @@
             <div class="grid grid-cols-2 gap-1">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
+                    <img id="agc-stamp" src="stamp.png" alt="Company Stamp" class="absolute bottom-4 right-4 w-32 h-32 opacity-90 hidden pointer-events-none z-10">
                     <div class="grid grid-cols-2 gap-1">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
@@ -567,7 +568,6 @@
             document.getElementById('clientName').value = jobData.clientName || '';
             document.getElementById('contactName').value = jobData.contactName || '';
             document.getElementById('phone').value = jobData.phone || '';
-            // MODIFIED: Set the value of the new input field instead of textContent
             document.getElementById('portOfCallDisplay').value = jobData.portOfCall || '';
             document.getElementById('work-description').value = jobData.workDescription || '';
             document.getElementById('workDone').value = jobData.workDone || '';
@@ -649,7 +649,6 @@
                 clientName: document.getElementById('clientName').value,
                 contactName: document.getElementById('contactName').value,
                 phone: document.getElementById('phone').value,
-                // MODIFIED: Read the value from the new input field
                 portOfCall: document.getElementById('portOfCallDisplay').value,
                 workDescription: document.getElementById('work-description').value,
                 workDone: document.getElementById('workDone').value,
@@ -674,6 +673,9 @@
                     row.querySelector('.part-comments').value
                 ])
             };
+
+            // JAVASCRIPT LINE ADDED HERE
+            document.getElementById('agc-stamp').classList.remove('hidden');
 
             const jobOrderNumber = document.getElementById('jobOrderNumber').value;
             if (jobOrderNumber) {
