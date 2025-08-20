@@ -239,7 +239,7 @@
             <div class="grid grid-cols-2 gap-1">
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of AGC Marine</div>
-                    <img id="agc-stamp" src="stamp.png" alt="Company Stamp" class="absolute bottom-4 right-4 w-32 h-32 opacity-90 hidden pointer-events-none z-10">
+                    <img id="agc-stamp" src="stamp.png" alt="Company Stamp" class="absolute bottom-4 right-4 w-36 h-36 opacity-90 hidden pointer-events-none z-10">
                     <div class="grid grid-cols-2 gap-1">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
@@ -272,6 +272,7 @@
                             <input type="text" id="ownerName" required class="value-input">
                             <label class="label-text mt-2 block">Position</label>
                             <select id="ownerPosition" required class="value-input">
+                                <option> </option>
                                 <option>Captain</option>
                                 <option>Chief Engineer</option>
                                 <option>ETO</option>
@@ -280,6 +281,9 @@
                                 <option>1st Officer</option>
                                 <option>2nd Officer</option>
                                 <option>Deckhand</option>
+                                <option>Owner</option>
+                                <option>Agent</option>
+                                <option>N/A</option>
                             </select>
                             <label class="label-text mt-2 block">Date</label>
                             <input type="date" id="ownerDate" required class="value-input">
