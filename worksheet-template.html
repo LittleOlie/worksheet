@@ -369,9 +369,14 @@
         let formDataForEdit = {};
         let currentScanTargetInput = null;
         const html5QrCode = new Html5Qrcode("scanner-container");
-        const ownerSignaturePad = new SignaturePad(document.getElementById('owner-signature-pad'));
-        const agcSignaturePad = new SignaturePad(document.getElementById('agc-signature-pad'));
-        const modalSignaturePad = new SignaturePad(document.getElementById('modal-signature-canvas'));
+        
+        // --- MODIFICATION: Different options for small and large pads ---
+        const smallPadOptions = { minWidth: 1, maxWidth: 1 };
+        const largePadOptions = { minWidth: 5, maxWidth: 5 };
+
+        const ownerSignaturePad = new SignaturePad(document.getElementById('owner-signature-pad'), smallPadOptions);
+        const agcSignaturePad = new SignaturePad(document.getElementById('agc-signature-pad'), smallPadOptions);
+        const modalSignaturePad = new SignaturePad(document.getElementById('modal-signature-canvas'), largePadOptions);
         
         // --- Element Selectors ---
         const scannerModal = document.getElementById('scanner-modal');
@@ -560,6 +565,12 @@
         });
 
         // --- Data Loading & Initialization ---
+        // MODIFICATION: Resize canvases before loading data.
+        // This prevents a potential race condition where loading a signature via fromDataURL
+        // is immediately overwritten by the resizeCanvas function, which redraws the canvas.
+        resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
+        resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
+        
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
@@ -612,8 +623,7 @@
             }
         }
 
-        resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
-        resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
+        // The initial resize calls were moved to before the try...catch block.
         updateWatermark();
 
         ['workDone', 'techComments'].forEach(id => {
@@ -639,8 +649,8 @@
 
         document.getElementById('submit-button').addEventListener('click', () => {
              if (!document.getElementById('worksheet-form').checkValidity()) {
-                document.getElementById('worksheet-form').reportValidity();
-                return;
+                 document.getElementById('worksheet-form').reportValidity();
+                 return;
              }
              if (ownerSignaturePad.isEmpty()) {
                  document.getElementById('owner-signature-error').classList.remove('hidden');
