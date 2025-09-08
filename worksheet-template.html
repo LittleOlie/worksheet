@@ -81,7 +81,7 @@
             min-height: 26px;
         }
         .final-text.work-done-final-view {
-            height: 285px; /* Fixed height for 18 rows */
+            height: 269px; /* Fixed height for 17 rows */
             overflow: hidden;
             padding-top: 4px;
             padding-bottom: 4px;
@@ -185,12 +185,12 @@
 
             <div class="form-section mb-1">
                 <div class="label-text">Work Description</div>
-                <textarea id="work-description" rows="1" class="value-input w-full font-bold" style="resize: none;"></textarea>
+                <textarea id="work-description" rows="2" class="value-input w-full font-bold" style="resize: none;"></textarea>
             </div>
 
             <div class="form-section mb-1 flex flex-col">
                 <div class="label-text">Work done</div>
-                <textarea id="workDone" class="value-input" rows="18" style="resize: none;" maxlength="950"></textarea>
+                <textarea id="workDone" class="value-input" rows="17" style="resize: none;" maxlength="950"></textarea>
                 <div id="workDoneCounter" class="text-xs text-right text-gray-500 pr-1"></div>
                 <div class="label-text mt-2">Technicians comments</div>
                 <textarea id="techComments" rows="2" class="value-input" style="resize: none; overflow: hidden;" maxlength="250"></textarea>
@@ -269,9 +269,9 @@
                      <div class="grid grid-cols-2 gap-1">
                         <div>
                             <label class="label-text">Name (In capital letters)</label>
-                            <input type="text" id="ownerName" required class="value-input">
+                            <input type="text" id="ownerName" class="value-input">
                             <label class="label-text mt-2 block">Position</label>
-                            <select id="ownerPosition" required class="value-input">
+                            <select id="ownerPosition" class="value-input">
                                 <option> </option>
                                 <option>Captain</option>
                                 <option>Chief Engineer</option>
@@ -286,7 +286,7 @@
                                 <option>N/A</option>
                             </select>
                             <label class="label-text mt-2 block">Date</label>
-                            <input type="date" id="ownerDate" required class="value-input">
+                            <input type="date" id="ownerDate" class="value-input">
                         </div>
                         <div>
                             <label class="label-text">Signature</label>
@@ -370,7 +370,6 @@
         let currentScanTargetInput = null;
         const html5QrCode = new Html5Qrcode("scanner-container");
         
-        // --- MODIFICATION: Different options for small and large pads ---
         const smallPadOptions = { minWidth: 1, maxWidth: 1 };
         const largePadOptions = { minWidth: 5, maxWidth: 5 };
 
@@ -565,9 +564,6 @@
         });
 
         // --- Data Loading & Initialization ---
-        // MODIFICATION: Resize canvases before loading data.
-        // This prevents a potential race condition where loading a signature via fromDataURL
-        // is immediately overwritten by the resizeCanvas function, which redraws the canvas.
         resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
         resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
         
@@ -623,7 +619,6 @@
             }
         }
 
-        // The initial resize calls were moved to before the try...catch block.
         updateWatermark();
 
         ['workDone', 'techComments'].forEach(id => {
@@ -652,10 +647,9 @@
                  document.getElementById('worksheet-form').reportValidity();
                  return;
              }
-             if (ownerSignaturePad.isEmpty()) {
-                 document.getElementById('owner-signature-error').classList.remove('hidden');
-                 return;
-             }
+             
+             // REMOVED: Signature validation check is no longer here.
+
              document.getElementById('owner-signature-error').classList.add('hidden');
 
             formDataForEdit = {
@@ -688,7 +682,6 @@
                 ])
             };
 
-            // JAVASCRIPT LINE ADDED HERE
             document.getElementById('agc-stamp').classList.remove('hidden');
 
             const jobOrderNumber = document.getElementById('jobOrderNumber').value;
