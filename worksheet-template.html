@@ -158,27 +158,37 @@
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
         
         <form id="worksheet-form" class="flex flex-col h-full">
-            <div class="grid grid-cols-2 gap-1 mb-1">
-                <div class="flex flex-col gap-1">
-                    <div class="form-section">
-                        <div class="label-text">Job order number</div>
-                        <input type="text" id="jobOrderNumber" readonly class="value-input">
-                    </div>
-                    <div class="form-section">
-                        <div class="label-text">Port of call / Place of work</div>
-                        <input type="text" id="portOfCallDisplay" class="value-input">
-                    </div>
+            
+            <div class="flex gap-1 mb-1 items-start">
+                <div class="pt-2">
+                    <img src="logoAGCtransparentback.png" alt="Company Logo" style="width: 200px; height: auto;">
                 </div>
-                <div class="form-section">
-                    <div class="label-text">Boat name / Client name</div>
-                    <input type="text" id="clientName" readonly class="value-input">
-                    <div class="mt-2">
-                        <span class="label-text">Contact: </span>
-                        <input type="text" id="contactName" readonly class="value-input inline w-auto">
+        
+                <div class="flex-grow grid grid-cols-2 gap-1">
+                    <div class="flex flex-col gap-2">
+                        <div class="pl-2 pt-2 text-sm italic text-gray-600">
+                           Setting the standard in marine navigation and communication.
+                        </div>
+                        <div class="form-section">
+                            <div class="label-text">Job order number</div>
+                            <input type="text" id="jobOrderNumber" readonly class="value-input">
+                        </div>
+                        <div class="form-section">
+                            <div class="label-text">Port of call / Place of work</div>
+                            <input type="text" id="portOfCallDisplay" class="value-input">
+                        </div>
                     </div>
-                     <div class="mt-1">
-                        <span class="label-text">Phone: </span>
-                        <input type="tel" id="phone" readonly class="value-input inline w-auto">
+                    <div class="form-section">
+                        <div class="label-text">Boat name / Client name</div>
+                        <input type="text" id="clientName" readonly class="value-input">
+                        <div class="mt-2">
+                            <span class="label-text">Contact: </span>
+                            <input type="text" id="contactName" readonly class="value-input inline w-auto">
+                        </div>
+                         <div class="mt-1">
+                            <span class="label-text">Phone: </span>
+                            <input type="tel" id="phone" readonly class="value-input inline w-auto">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -312,6 +322,10 @@
     <div id="parts-page" class="page hidden">
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
 
+        <div class="flex justify-start items-center mb-2">
+            <img src="logoAGCtransparentback.png" alt="Company Logo" style="width: 250px; height: auto;">
+        </div>
+        
         <div class="flex justify-between items-center border-b-2 pb-2 mb-4 form-section">
             <h2 class="text-xl font-bold">Additional Parts List</h2>
             <div id="partsPageJobOrder" class="text-sm font-medium"></div>
