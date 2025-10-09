@@ -105,6 +105,86 @@
             max-width: 100%;
             height: auto;
         }
+        
+        /* New styles for image manipulation */
+        #image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow clicks to pass through to form */
+            z-index: 5;
+        }
+        .image-wrapper {
+            position: absolute;
+            border: 2px dashed #3b82f6;
+            cursor: move;
+            pointer-events: auto; /* Make individual images interactive */
+            user-select: none;
+        }
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none; /* Prevent browser's default image drag */
+        }
+        .resize-handle {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background-color: #3b82f6;
+            border: 1px solid white;
+            border-radius: 50%;
+            cursor: se-resize;
+        }
+        .image-wrapper .control-btn {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            border: 1px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 1; /* Ensure buttons are above resize handle */
+        }
+        .image-wrapper .delete-btn {
+            top: -10px;
+            right: -10px;
+            background-color: #ef4444; /* red */
+        }
+        .image-wrapper .lock-btn {
+            top: -10px;
+            left: -10px;
+            background-color: #3b82f6; /* blue */
+        }
+        .image-wrapper.is-locked {
+            border-style: solid;
+            border-color: #9ca3af;
+            cursor: default;
+            pointer-events: none; /* Allow clicks to pass through */
+        }
+        .image-wrapper.is-locked .resize-handle,
+        .image-wrapper.is-locked .delete-btn {
+            display: none;
+        }
+        .image-wrapper.is-locked .lock-btn {
+            pointer-events: auto; /* IMPORTANT: Allow unlock click */
+            background-color: #6b7280; /* gray when locked */
+        }
+        .image-wrapper.is-finalized {
+            border: none;
+            cursor: default;
+        }
 
         @media print {
             body { background-color: white; }
@@ -136,7 +216,7 @@
             .page:last-child {
                 page-break-after: auto;
             }
-            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn { display: none !important; }
+            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn, #add-image-button, .resize-handle, .control-btn { display: none !important; }
             .hidden { display: none !important; }
             .form-section {
                 border: 1px solid #d1d5db !important;
@@ -155,6 +235,7 @@
 <body class="bg-gray-200">
 
     <div id="main-page" class="page">
+        <div id="image-container"></div>
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
         
         <form id="worksheet-form" class="flex flex-col h-full">
@@ -311,10 +392,12 @@
                 </div>
             </div>
             
-            <div id="controls" class="pt-4">
+            <div id="controls" class="pt-4 space-y-2">
+                <input type="file" id="image-uploader" class="hidden" accept="image/*">
+                <button type="button" id="add-image-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Add Image</button>
                 <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
-                <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 mt-2 hidden">Print / Save as PDF</button>
-                <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 mt-2 hidden">Go Back & Edit</button>
+                <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 hidden">Print / Save as PDF</button>
+                <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 hidden">Go Back & Edit</button>
             </div>
         </form>
     </div>
@@ -401,6 +484,118 @@
         const partsPage = document.getElementById('parts-page');
         const partsListBody = document.getElementById('parts-list-body');
         const techLogBody = document.getElementById('tech-log-body');
+        const imageContainer = document.getElementById('image-container');
+
+        // --- Image Manipulation Functions ---
+        function makeDraggableAndResizable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const resizeHandle = element.querySelector('.resize-handle');
+
+            const dragMouseDown = (e) => {
+                if (element.classList.contains('is-locked')) return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            };
+
+            const elementDrag = (e) => {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            };
+
+            const closeDragElement = () => {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            };
+
+            const resizeMouseDown = (e) => {
+                if (element.classList.contains('is-locked')) return;
+                e.stopPropagation(); 
+                let startX = e.clientX;
+                let startY = e.clientY;
+                let startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                let startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+
+                const doResize = (e) => {
+                    element.style.width = (startWidth + e.clientX - startX) + 'px';
+                    element.style.height = (startHeight + e.clientY - startY) + 'px';
+                };
+
+                const stopResize = () => {
+                    document.removeEventListener('mousemove', doResize);
+                    document.removeEventListener('mouseup', stopResize);
+                };
+
+                document.addEventListener('mousemove', doResize);
+                document.addEventListener('mouseup', stopResize);
+            };
+            
+            element.onmousedown = dragMouseDown;
+            if(resizeHandle) resizeHandle.onmousedown = resizeMouseDown;
+        }
+
+        function createImageOnPage(imageData) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper';
+
+            const lockIconUnlocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:12px; height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m11.25 3.75H4.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5Zm-1.5-3.75V6.75c0-1.528-.768-2.9-1.98-3.792" /></svg>`;
+            const lockIconLocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:12px; height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>`;
+
+            wrapper.innerHTML = `
+                <img src="${imageData.src}" alt="Uploaded content">
+                <div class="resize-handle"></div>
+                <div class="control-btn delete-btn" title="Delete Image">&times;</div>
+                <div class="control-btn lock-btn" title="Lock/Unlock Image">${lockIconUnlocked}</div>
+            `;
+            
+            wrapper.style.top = imageData.top || '20px';
+            wrapper.style.left = imageData.left || '20px';
+            wrapper.style.width = imageData.width || '200px';
+            wrapper.style.height = imageData.height || '150px';
+
+            imageContainer.appendChild(wrapper);
+            makeDraggableAndResizable(wrapper);
+
+            const deleteBtn = wrapper.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrapper.remove();
+            });
+
+            const lockBtn = wrapper.querySelector('.lock-btn');
+            lockBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isLocked = wrapper.classList.toggle('is-locked');
+                lockBtn.innerHTML = isLocked ? lockIconLocked : lockIconUnlocked;
+            });
+
+            if (imageData.isLocked) {
+                wrapper.classList.add('is-locked');
+                lockBtn.innerHTML = lockIconLocked;
+            }
+        }
+
+        document.getElementById('add-image-button').addEventListener('click', () => {
+            document.getElementById('image-uploader').click();
+        });
+
+        document.getElementById('image-uploader').addEventListener('change', function(event) {
+            if (event.target.files && event.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    createImageOnPage({ src: e.target.result });
+                }
+                reader.readAsDataURL(event.target.files[0]);
+                this.value = ''; // Reset file input
+            }
+        });
 
         // --- Barcode Scanner Functions ---
         const qrCodeSuccessCallback = (decodedText) => {
@@ -613,6 +808,10 @@
                 ownerSignaturePad.fromDataURL(jobData.ownerSignature);
             }
 
+            if (jobData.addedImages && Array.isArray(jobData.addedImages)) {
+                jobData.addedImages.forEach(imgData => createImageOnPage(imgData));
+            }
+
             handlePartsPageVisibility();
             if (jobData.additionalParts === 'Yes' && jobData.partsList?.length > 0) {
                 partsListBody.innerHTML = '';
@@ -662,8 +861,6 @@
                  return;
              }
              
-             // REMOVED: Signature validation check is no longer here.
-
              document.getElementById('owner-signature-error').classList.add('hidden');
 
             formDataForEdit = {
@@ -693,7 +890,15 @@
                 partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [
                     row.querySelector('.part-number').value, row.querySelector('.part-quantity').value,
                     row.querySelector('.part-comments').value
-                ])
+                ]),
+                addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({
+                    src: el.querySelector('img').src,
+                    top: el.style.top,
+                    left: el.style.left,
+                    width: el.style.width,
+                    height: el.style.height,
+                    isLocked: el.classList.contains('is-locked')
+                }))
             };
 
             document.getElementById('agc-stamp').classList.remove('hidden');
@@ -720,19 +925,27 @@
                 el.parentNode.replaceChild(textElement, el);
             });
 
+            document.querySelectorAll('.image-wrapper').forEach(el => {
+                el.classList.add('is-finalized');
+                el.querySelector('.resize-handle')?.remove();
+                el.querySelector('.delete-btn')?.remove();
+                el.querySelector('.lock-btn')?.remove();
+            });
+
             document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
             
             document.getElementById('submit-button').classList.add('hidden');
+            document.getElementById('add-image-button').classList.add('hidden');
 
             const controlsDiv = document.getElementById('controls');
-            controlsDiv.classList.remove('pt-4');
+            controlsDiv.classList.remove('pt-4', 'space-y-2');
             controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4');
             
             const printButton = document.getElementById('print-button');
             const editButton = document.getElementById('edit-button');
 
-            printButton.classList.remove('hidden', 'w-full', 'mt-2');
-            editButton.classList.remove('hidden', 'w-full', 'mt-2');
+            printButton.classList.remove('hidden');
+            editButton.classList.remove('hidden');
 
             setTimeout(() => window.print(), 100);
         });
