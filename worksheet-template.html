@@ -801,10 +801,18 @@
         
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
+            const encodedUrlData = urlParams.get('data');
+            const editMode = urlParams.get('edit') === 'true';
+            
+            // *** CHANGED: Load from sessionStorage if available, otherwise from URL ***
+            const sessionData = sessionStorage.getItem('jobDataForEdit');
             let jobData = {};
-            if (encodedData) {
-                jobData = JSON.parse(atob(encodedData));
+
+            if (editMode && sessionData) {
+                jobData = JSON.parse(sessionData);
+                sessionStorage.removeItem('jobDataForEdit'); // Clean up after use
+            } else if (encodedUrlData) {
+                jobData = JSON.parse(atob(encodedUrlData));
             }
             
             document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
@@ -849,7 +857,7 @@
             document.getElementById('partsPageJobOrder').textContent = `Job Order: ${jobData.jobOrderNumber || 'N/A'}`;
 
         } catch (error) {
-            console.error("Could not parse job data from URL:", error);
+            console.error("Could not parse job data:", error);
             for (let i = 0; i < 3; i++) {
                 addLogRow();
             }
@@ -870,8 +878,9 @@
         document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
 
         document.getElementById('edit-button').addEventListener('click', () => {
-            const encodedData = btoa(JSON.stringify(formDataForEdit));
-            window.location.href = window.location.pathname + '?data=' + encodedData;
+            // *** CHANGED: Save to sessionStorage instead of URL ***
+            sessionStorage.setItem('jobDataForEdit', JSON.stringify(formDataForEdit));
+            window.location.href = window.location.pathname + '?edit=true';
         });
 
         document.getElementById('print-button').addEventListener('click', () => {
