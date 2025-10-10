@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Requisition Slip</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* --- STYLES FOR THE PRINTABLE RECEIPT --- */
+        #receipt-preview {
+            display: none;
+        }
+
+        @media print {
+            /* Hide everything on the page except for the receipt container */
+            body > *:not(.print-container) {
+                display: none !important;
+            }
+            /* Make the receipt container visible and style it for the thermal printer */
+            .print-container {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+            @page {
+                margin: 0.5cm; /* Adjust margins for your printer */
+            }
+            .receipt-content {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 10pt;
+                line-height: 1.3;
+                color: #000;
+                background-color: #fff;
+                width: 72mm; /* Standard width for 80mm paper rolls */
+            }
+            .receipt-content header {
+                text-align: center;
+                margin-bottom: 8px;
+            }
+            .receipt-content h1 {
+                font-size: 12pt;
+                margin: 0;
+                padding: 0;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .receipt-content h2 {
+                font-size: 10pt;
+                margin: 0;
+                padding: 0;
+                font-weight: normal;
+                border-top: 1px dashed #000;
+                border-bottom: 1px dashed #000;
+                margin-top: 4px;
+                padding: 2px 0;
+                text-transform: uppercase;
+            }
+            .receipt-content .info-section {
+                margin-top: 8px;
+                margin-bottom: 8px;
+                font-size: 9pt;
+            }
+            .receipt-content .info-section div {
+                display: flex;
+                justify-content: space-between;
+            }
+            .receipt-content .info-section .label {
+                font-weight: bold;
+                margin-right: 5px;
+            }
+            .receipt-content .items-table {
+                width: 100%;
+                padding-top: 8px;
+                margin-top: 8px;
+            }
+            .receipt-content .items-header .row {
+                display: flex;
+                font-weight: bold;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 4px;
+                margin-bottom: 4px;
+            }
+            .receipt-content .items-body .item {
+                display: flex;
+                margin-bottom: 4px;
+            }
+            .receipt-content .col-qty { width: 15%; text-align: left; }
+            .receipt-content .col-item { width: 85%; word-break: break-all; }
+            .receipt-content footer {
+                padding-top: 8px;
+                margin-top: 15px;
+                text-align: center;
+            }
+            .qrcode-container {
+                margin: 10px auto;
+                display: flex;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="entry-form" class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <div class="text-center mb-6">
+            <img src="logoAGCtransparentback.png" alt="Company Logo" class="mx-auto w-48 mb-2">
+            <h1 class="text-2xl font-bold text-gray-800">Stock Requisition Slip</h1>
+            <p class="text-gray-500 text-sm">List items taken from stock.</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label for="boatName" class="block text-sm font-medium text-gray-700">Boat Name / Client</label>
+                <input type="text" id="boatName" placeholder="e.g., INDIABOO" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+            
+            <div class="border-t pt-4">
+                <h2 class="text-lg font-semibold text-gray-700">Items</h2>
+                <div id="items-list" class="mt-2 space-y-2">
+                    </div>
+                <button type="button" id="add-item-btn" class="mt-3 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded">
+                    + Add Item
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-8 border-t pt-6">
+            <button type="button" id="print-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">
+                Generate & Print Slip
+            </button>
+        </div>
+    </div>
+
+    <div id="receipt-preview" class="print-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const boatNameInput = document.getElementById('boatName');
+            const itemsList = document.getElementById('items-list');
+            const addItemBtn = document.getElementById('add-item-btn');
+            const printBtn = document.getElementById('print-btn');
+            const receiptPreview = document.getElementById('receipt-preview');
+            
+            let itemCounter = 0;
+
+            // Function to add a new item row to the form
+            function createItemRow() {
+                itemCounter++;
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 item-row';
+                row.innerHTML = `
+                    <input type="number" placeholder="Qty" class="item-qty w-1/6 block px-3 py-2 border border-gray-300 rounded-md text-sm" min="1" value="1">
+                    <input type="text" placeholder="Part Number or Description" class="item-desc w-4/G block px-3 py-2 border border-gray-300 rounded-md text-sm">
+                    <button type="button" class="remove-item-btn w-1/6 text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded">Remove</button>
+                `;
+                itemsList.appendChild(row);
+
+                // Add event listener to the new remove button
+                row.querySelector('.remove-item-btn').addEventListener('click', () => {
+                    row.remove();
+                });
+            }
+
+            // Add the first item row automatically
+            createItemRow();
+
+            // Event listener for the "Add Item" button
+            addItemBtn.addEventListener('click', createItemRow);
+            
+            // Event listener for the "Print" button
+            printBtn.addEventListener('click', () => {
+                const boatName = boatNameInput.value.trim();
+                if (!boatName) {
+                    alert('Please enter a Boat Name.');
+                    boatNameInput.focus();
+                    return;
+                }
+
+                const items = [];
+                const itemRows = itemsList.querySelectorAll('.item-row');
+                itemRows.forEach(row => {
+                    const qty = row.querySelector('.item-qty').value;
+                    const desc = row.querySelector('.item-desc').value.trim();
+                    if (desc) { // Only add items that have a description
+                        items.push({ qty: qty || '1', desc: desc });
+                    }
+                });
+                
+                if (items.length === 0) {
+                    alert('Please add at least one item with a description.');
+                    return;
+                }
+
+                // --- Build the HTML for the receipt ---
+                const dateObj = new Date();
+                const dateString = dateObj.toLocaleDateString('en-PH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+                let itemsHtml = '';
+                items.forEach(item => {
+                    itemsHtml += `
+                        <div class="item">
+                            <div class="col-qty">${item.qty}x</div>
+                            <div class="col-item">${item.desc}</div>
+                        </div>
+                    `;
+                });
+
+                const receiptHtml = `
+                    <div class="receipt-content">
+                        <header>
+                            <h1>AGC MARINE SOLUTIONS</h1>
+                            <h2>Stock Requisition</h2>
+                        </header>
+                        <section class="info-section">
+                            <div><span class="label">For:</span><span>${boatName}</span></div>
+                            <div><span class="label">Date:</span><span>${dateString}</span></div>
+                        </section>
+                        <section class="items-table">
+                            <div class="items-header">
+                                <div class="row">
+                                    <div class="col-qty">QTY</div>
+                                    <div class="col-item">ITEM</div>
+                                </div>
+                            </div>
+                            <div class="items-body">
+                                ${itemsHtml}
+                            </div>
+                        </section>
+                        <footer>
+                            <div id="qrcode-container" class="qrcode-container"></div>
+                        </footer>
+                    </div>
+                `;
+
+                // Place the generated HTML into the preview container
+                receiptPreview.innerHTML = receiptHtml;
+                
+                // --- Generate the QR Code ---
+                const qrData = {
+                    slipType: "Stock Requisition",
+                    boatName: boatName,
+                    date: dateObj.toISOString(), // Use ISO format for consistency in data
+                    items: items
+                };
+
+                new QRCode(document.getElementById("qrcode-container"), {
+                    text: JSON.stringify(qrData),
+                    width: 80,
+                    height: 80,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+                
+                // Use a short timeout to ensure the QR code image renders before printing
+                setTimeout(() => {
+                    window.print();
+                }, 250);
+            });
+        });
+    </script>
+
+</body>
+</html>
