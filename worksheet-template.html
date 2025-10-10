@@ -106,8 +106,8 @@
             height: auto;
         }
         
-        /* New styles for image manipulation */
-        #image-container {
+        /* Styles for movable elements */
+        #movable-elements-container {
             position: absolute;
             top: 0;
             left: 0;
@@ -116,18 +116,38 @@
             pointer-events: none; /* Allow clicks to pass through to form */
             z-index: 5;
         }
-        .image-wrapper {
+        .movable-wrapper {
             position: absolute;
             border: 2px dashed #3b82f6;
             cursor: move;
-            pointer-events: auto; /* Make individual images interactive */
+            pointer-events: auto; /* Make individual elements interactive */
             user-select: none;
+            background-color: rgba(255, 255, 255, 0.8);
         }
-        .image-wrapper img {
+
+        /* *** NEW: Z-index rules for stacking order *** */
+        .image-wrapper {
+            z-index: 10;
+        }
+        .text-wrapper {
+            z-index: 20;
+        }
+        
+        .movable-wrapper img {
             width: 100%;
             height: 100%;
             display: block;
             pointer-events: none; /* Prevent browser's default image drag */
+        }
+        .editable-text {
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            font-size: 14px;
+            line-height: 1.4;
+            outline: none;
+            overflow: hidden;
+            cursor: text;
         }
         .resize-handle {
             position: absolute;
@@ -140,7 +160,7 @@
             border-radius: 50%;
             cursor: se-resize;
         }
-        .image-wrapper .control-btn {
+        .movable-wrapper .control-btn {
             position: absolute;
             width: 24px;
             height: 24px;
@@ -155,35 +175,35 @@
             cursor: pointer;
             border: 2px solid white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            z-index: 1; /* Ensure buttons are above resize handle */
+            z-index: 30; /* Higher than text and images */
         }
-        .image-wrapper .delete-btn {
+        .movable-wrapper .delete-btn {
             top: -12px;
             right: -12px;
             background-color: #ef4444; /* red */
         }
-        .image-wrapper .lock-btn {
+        .movable-wrapper .lock-btn {
             top: -12px;
             left: -12px;
             background-color: #3b82f6; /* blue */
         }
-        .image-wrapper.is-locked {
+        .movable-wrapper.is-locked {
             border-style: solid;
             border-color: #9ca3af;
             cursor: default;
             pointer-events: none; /* Allow clicks to pass through */
         }
-        .image-wrapper.is-locked .resize-handle,
-        .image-wrapper.is-locked .delete-btn {
+        .movable-wrapper.is-locked .resize-handle,
+        .movable-wrapper.is-locked .delete-btn {
             display: none;
         }
-        .image-wrapper.is-locked .lock-btn {
+        .movable-wrapper.is-locked .lock-btn {
             pointer-events: auto; /* IMPORTANT: Allow unlock click */
             background-color: #6b7280; /* gray when locked */
         }
-        .image-wrapper.is-finalized {
+        .movable-wrapper.is-finalized {
             border: none;
-            cursor: default;
+            background-color: transparent;
         }
 
         @media print {
@@ -216,7 +236,7 @@
             .page:last-child {
                 page-break-after: auto;
             }
-            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn, #add-image-button, .resize-handle, .control-btn { display: none !important; }
+            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn, #add-image-button, #add-text-button, .resize-handle, .control-btn { display: none !important; }
             .hidden { display: none !important; }
             .form-section {
                 border: 1px solid #d1d5db !important;
@@ -235,7 +255,7 @@
 <body class="bg-gray-200">
 
     <div id="main-page" class="page">
-        <div id="image-container"></div>
+        <div id="movable-elements-container"></div>
         <div class="watermark-overlay"><span class="watermark-text">AGC MARINE SOLUTIONS</span></div>
         
         <form id="worksheet-form" class="flex flex-col h-full">
@@ -394,7 +414,10 @@
             
             <div id="controls" class="pt-4 space-y-2">
                 <input type="file" id="image-uploader" class="hidden" accept="image/*">
-                <button type="button" id="add-image-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Add Image</button>
+                <div class="flex gap-2">
+                    <button type="button" id="add-image-button" class="w-1/2 py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Add Image</button>
+                    <button type="button" id="add-text-button" class="w-1/2 py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Add Text</button>
+                </div>
                 <button type="button" id="submit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Submit & Finalize</button>
                 <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 hidden">Print / Save as PDF</button>
                 <button type="button" id="edit-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 hidden">Go Back & Edit</button>
@@ -475,48 +498,33 @@
         const modalSignaturePad = new SignaturePad(document.getElementById('modal-signature-canvas'), largePadOptions);
         
         // --- Element Selectors ---
-        const scannerModal = document.getElementById('scanner-modal');
-        const scannerError = document.getElementById('scanner-error');
-        const workCompletedSelect = document.getElementById('workCompleted');
-        const watermarkOverlays = document.querySelectorAll('.watermark-overlay');
-        const watermarkTexts = document.querySelectorAll('.watermark-text');
-        const additionalPartsSelect = document.getElementById('additionalParts');
-        const partsPage = document.getElementById('parts-page');
-        const partsListBody = document.getElementById('parts-list-body');
-        const techLogBody = document.getElementById('tech-log-body');
-        const imageContainer = document.getElementById('image-container');
+        const movableElementsContainer = document.getElementById('movable-elements-container');
 
-        // --- Image Manipulation Functions (TOUCH & MOUSE SUPPORT) ---
+        // --- Movable Elements Functions (TOUCH & MOUSE SUPPORT) ---
         function makeDraggableAndResizable(element) {
-            let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
-            let activeInteraction = null; // Can be 'drag' or 'resize'
+            let activeInteraction = null;
             const resizeHandle = element.querySelector('.resize-handle');
-
-            const getEventCoords = (e) => {
-                return e.touches ? e.touches[0] : e;
-            };
+            const getEventCoords = (e) => e.touches ? e.touches[0] : e;
 
             const interactionStart = (e, type) => {
                 if (element.classList.contains('is-locked')) return;
                 activeInteraction = type;
 
-                e.preventDefault();
                 e.stopPropagation();
+                if (type === 'drag') e.preventDefault(); 
 
                 const coords = getEventCoords(e);
-                initialX = coords.clientX;
-                initialY = coords.clientY;
+                const initialX = coords.clientX;
+                const initialY = coords.clientY;
 
                 if (type === 'drag') {
-                    xOffset = element.offsetLeft;
-                    yOffset = element.offsetTop;
+                    element.dataset.xOffset = element.offsetLeft - initialX;
+                    element.dataset.yOffset = element.offsetTop - initialY;
                 } else if (type === 'resize') {
-                    initialX = coords.clientX;
-                    initialY = coords.clientY;
-                    let startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
-                    let startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
-                    element.dataset.startWidth = startWidth;
-                    element.dataset.startHeight = startHeight;
+                    element.dataset.initialX = initialX;
+                    element.dataset.initialY = initialY;
+                    element.dataset.startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                    element.dataset.startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
                 }
                 
                 document.addEventListener('mousemove', interactionMove);
@@ -530,19 +538,21 @@
                 e.preventDefault();
 
                 const coords = getEventCoords(e);
-                currentX = coords.clientX;
-                currentY = coords.clientY;
 
                 if (activeInteraction === 'drag') {
-                    element.style.left = (xOffset + currentX - initialX) + 'px';
-                    element.style.top = (yOffset + currentY - initialY) + 'px';
+                    const xOffset = parseFloat(element.dataset.xOffset);
+                    const yOffset = parseFloat(element.dataset.yOffset);
+                    element.style.left = (coords.clientX + xOffset) + 'px';
+                    element.style.top = (coords.clientY + yOffset) + 'px';
                 } else if (activeInteraction === 'resize') {
+                    const initialX = parseFloat(element.dataset.initialX);
+                    const initialY = parseFloat(element.dataset.initialY);
                     const startWidth = parseFloat(element.dataset.startWidth);
                     const startHeight = parseFloat(element.dataset.startHeight);
-                    const newWidth = startWidth + (currentX - initialX);
-                    const newHeight = startHeight + (currentY - initialY);
-                    if (newWidth > 40) element.style.width = newWidth + 'px';
-                    if (newHeight > 40) element.style.height = newHeight + 'px';
+                    const newWidth = startWidth + (coords.clientX - initialX);
+                    const newHeight = startHeight + (coords.clientY - initialY);
+                    if (newWidth > 50) element.style.width = newWidth + 'px';
+                    if (newHeight > 30) element.style.height = newHeight + 'px';
                 }
             };
 
@@ -553,434 +563,140 @@
                 document.removeEventListener('mouseup', interactionEnd);
                 document.removeEventListener('touchend', interactionEnd);
             };
-
-            element.addEventListener('mousedown', (e) => interactionStart(e, 'drag'));
-            element.addEventListener('touchstart', (e) => interactionStart(e, 'drag'), { passive: false });
-            resizeHandle.addEventListener('mousedown', (e) => interactionStart(e, 'resize'));
-            resizeHandle.addEventListener('touchstart', (e) => interactionStart(e, 'resize'), { passive: false });
-        }
-
-
-        function createImageOnPage(imageData) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'image-wrapper';
-
-            const lockIconUnlocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m11.25 3.75H4.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5Zm-1.5-3.75V6.75c0-1.528-.768-2.9-1.98-3.792" /></svg>`;
-            const lockIconLocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>`;
-
-            wrapper.innerHTML = `
-                <img src="${imageData.src}" alt="Uploaded content">
-                <div class="resize-handle"></div>
-                <div class="control-btn delete-btn" title="Delete Image">&times;</div>
-                <div class="control-btn lock-btn" title="Lock/Unlock Image">${lockIconUnlocked}</div>
-            `;
             
-            wrapper.style.top = imageData.top || '20px';
-            wrapper.style.left = imageData.left || '20px';
-            wrapper.style.width = imageData.width || '200px';
-            wrapper.style.height = imageData.height || '150px';
+            const dragInitiator = (e) => {
+                if (e.target === element) {
+                    interactionStart(e, 'drag');
+                }
+            };
+            
+            element.addEventListener('mousedown', dragInitiator);
+            element.addEventListener('touchstart', dragInitiator, { passive: false });
 
-            imageContainer.appendChild(wrapper);
-            makeDraggableAndResizable(wrapper);
+            if (resizeHandle) {
+                resizeHandle.addEventListener('mousedown', (e) => interactionStart(e, 'resize'));
+                resizeHandle.addEventListener('touchstart', (e) => interactionStart(e, 'resize'), { passive: false });
+            }
+        }
+        
+        const lockIconUnlocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m11.25 3.75H4.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5Zm-1.5-3.75V6.75c0-1.528-.768-2.9-1.98-3.792" /></svg>`;
+        const lockIconLocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>`;
 
+        function setupMovableElementControls(wrapper, editableContentElement = null) {
             const deleteBtn = wrapper.querySelector('.delete-btn');
             const lockBtn = wrapper.querySelector('.lock-btn');
-
+            
             const handleDelete = (e) => { e.stopPropagation(); wrapper.remove(); };
             const handleLock = (e) => {
                 e.stopPropagation();
                 const isLocked = wrapper.classList.toggle('is-locked');
                 lockBtn.innerHTML = isLocked ? lockIconLocked : lockIconUnlocked;
+                if(editableContentElement) {
+                    editableContentElement.setAttribute('contenteditable', !isLocked);
+                }
             };
-
+            
             deleteBtn.addEventListener('click', handleDelete);
             deleteBtn.addEventListener('touchend', handleDelete);
             lockBtn.addEventListener('click', handleLock);
             lockBtn.addEventListener('touchend', handleLock);
+        }
 
+        function createImageOnPage(imageData) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'movable-wrapper image-wrapper';
+            wrapper.innerHTML = `
+                <img src="${imageData.src}" alt="Uploaded content">
+                <div class="resize-handle"></div>
+                <div class="control-btn delete-btn" title="Delete">&times;</div>
+                <div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>
+            `;
+            wrapper.style.top = imageData.top || '20px';
+            wrapper.style.left = imageData.left || '20px';
+            wrapper.style.width = imageData.width || '200px';
+            wrapper.style.height = imageData.height || '150px';
+
+            movableElementsContainer.appendChild(wrapper);
+            makeDraggableAndResizable(wrapper);
+            setupMovableElementControls(wrapper);
 
             if (imageData.isLocked) {
                 wrapper.classList.add('is-locked');
-                lockBtn.innerHTML = lockIconLocked;
+                wrapper.querySelector('.lock-btn').innerHTML = lockIconLocked;
             }
         }
 
-        document.getElementById('add-image-button').addEventListener('click', () => {
-            document.getElementById('image-uploader').click();
-        });
+        function createTextboxOnPage(textData = {}) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'movable-wrapper text-wrapper';
+            wrapper.innerHTML = `
+                <div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div>
+                <div class="resize-handle"></div>
+                <div class="control-btn delete-btn" title="Delete">&times;</div>
+                <div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>
+            `;
+            wrapper.style.top = textData.top || '40px';
+            wrapper.style.left = textData.left || '40px';
+            wrapper.style.width = textData.width || '150px';
+            wrapper.style.height = textData.height || '50px';
 
+            const editableTextDiv = wrapper.querySelector('.editable-text');
+            movableElementsContainer.appendChild(wrapper);
+            makeDraggableAndResizable(wrapper);
+            setupMovableElementControls(wrapper, editableTextDiv);
+
+            if (textData.isLocked) {
+                wrapper.classList.add('is-locked');
+                wrapper.querySelector('.lock-btn').innerHTML = lockIconLocked;
+                editableTextDiv.setAttribute('contenteditable', 'false');
+            }
+        }
+
+        document.getElementById('add-image-button').addEventListener('click', () => document.getElementById('image-uploader').click());
+        document.getElementById('add-text-button').addEventListener('click', () => createTextboxOnPage());
+        
         document.getElementById('image-uploader').addEventListener('change', function(event) {
             if (event.target.files && event.target.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    createImageOnPage({ src: e.target.result });
-                }
+                reader.onload = (e) => createImageOnPage({ src: e.target.result });
                 reader.readAsDataURL(event.target.files[0]);
-                this.value = ''; // Reset file input
+                this.value = '';
             }
         });
-
-        // --- Barcode Scanner Functions ---
-        const qrCodeSuccessCallback = (decodedText) => {
-            if (currentScanTargetInput) {
-                currentScanTargetInput.value = decodedText;
-                currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-            stopScanner();
-        };
-
+        
+        // --- The rest of the script is identical to the previous version ---
+        
+        const qrCodeSuccessCallback = (decodedText) => { if (currentScanTargetInput) { currentScanTargetInput.value = decodedText; currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true })); } stopScanner(); };
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-        function startScanner(targetInput) {
-            currentScanTargetInput = targetInput;
-            scannerModal.classList.remove('hidden');
-            scannerError.classList.add('hidden');
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-                .catch(() => {
-                    scannerError.textContent = "Unable to start camera. Please grant permission.";
-                    scannerError.classList.remove('hidden');
-                });
-        }
-        
-        function stopScanner() {
-            html5QrCode.stop().then(() => scannerModal.classList.add('hidden'))
-                                     .catch(() => scannerModal.classList.add('hidden'));
-        }
-
-        // --- UI & Page Logic Functions ---
-        function updateWatermark() {
-            const isFinished = workCompletedSelect.value === 'Yes';
-            watermarkTexts.forEach(el => el.textContent = isFinished ? 'AGC MARINE SOLUTIONS' : 'AGC MARINE SOLUTIONS');
-            watermarkOverlays.forEach(el => el.classList.toggle('finished-watermark', isFinished));
-        }
-
-        function handlePartsPageVisibility() {
-            const shouldBeVisible = additionalPartsSelect.value === 'Yes';
-            partsPage.classList.toggle('hidden', !shouldBeVisible);
-            document.getElementById('main-page').classList.toggle('has-parts-page', shouldBeVisible);
-            if (shouldBeVisible && partsListBody.children.length === 0) {
-                addPartRow();
-            }
-        }
-
-        function updateBarcode(partNumberInput) {
-            const row = partNumberInput.closest('tr');
-            if (!row) return;
-            const barcodeElement = row.querySelector('.barcode-display');
-            const value = partNumberInput.value;
-
-            if (value) {
-                try {
-                    JsBarcode(barcodeElement, value, {
-                        format: "CODE128", displayValue: false, margin: 0, height: 30, background: 'transparent'
-                    });
-                    barcodeElement.style.display = 'block';
-                } catch {
-                    barcodeElement.style.display = 'none';
-                }
-            } else {
-                 barcodeElement.style.display = 'none';
-            }
-        }
-
-        function addPartRow(data = ['', 1, '']) {
-            const row = document.createElement('tr');
-            row.className = 'border-b last:border-b-0';
-            
-            let quantityOptions = '';
-            for (let i = 1; i <= 50; i++) {
-                quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`;
-            }
-            const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`;
-
-            row.innerHTML = `
-                <td class="pr-2 py-1 align-middle">
-                    <div class="flex items-center">
-                        <input type="text" class="value-input part-number py-1" value="${data[0]}">
-                        <button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </button>
-                    </div>
-                </td>
-                <td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td>
-                <td class="pr-2 py-1 align-middle">${quantitySelect}</td>
-                <td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td>
-                <td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
-            `;
-            partsListBody.appendChild(row);
-
-            if (data[0]) {
-                updateBarcode(row.querySelector('.part-number'));
-            }
-        }
-
-        const addLogRow = (data = ['', '', '', '', '', '']) => {
-            const row = document.createElement('tr');
-            row.className = 'border-b last:border-b-0';
-            const dateValue = data[0];
-            
-            row.innerHTML = `
-                <td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${dateValue}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td>
-                <td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td>
-                <td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`;
-            techLogBody.appendChild(row);
-        };
-        
-        // --- Event Listeners ---
+        function startScanner(targetInput) { const scannerModal = document.getElementById('scanner-modal'); const scannerError = document.getElementById('scanner-error'); currentScanTargetInput = targetInput; scannerModal.classList.remove('hidden'); scannerError.classList.add('hidden'); html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback).catch(() => { scannerError.textContent = "Unable to start camera. Please grant permission."; scannerError.classList.remove('hidden'); }); }
+        function stopScanner() { html5QrCode.stop().then(() => document.getElementById('scanner-modal').classList.add('hidden')).catch(() => document.getElementById('scanner-modal').classList.add('hidden')); }
+        function updateWatermark() { const workCompletedSelect = document.getElementById('workCompleted'); const watermarkOverlays = document.querySelectorAll('.watermark-overlay'); const watermarkTexts = document.querySelectorAll('.watermark-text'); const isFinished = workCompletedSelect.value === 'Yes'; watermarkTexts.forEach(el => el.textContent = isFinished ? 'AGC MARINE SOLUTIONS' : 'AGC MARINE SOLUTIONS'); watermarkOverlays.forEach(el => el.classList.toggle('finished-watermark', isFinished)); }
+        function handlePartsPageVisibility() { const additionalPartsSelect = document.getElementById('additionalParts'); const partsPage = document.getElementById('parts-page'); const partsListBody = document.getElementById('parts-list-body'); const shouldBeVisible = additionalPartsSelect.value === 'Yes'; partsPage.classList.toggle('hidden', !shouldBeVisible); document.getElementById('main-page').classList.toggle('has-parts-page', shouldBeVisible); if (shouldBeVisible && partsListBody.children.length === 0) { addPartRow(); } }
+        function updateBarcode(partNumberInput) { const row = partNumberInput.closest('tr'); if (!row) return; const barcodeElement = row.querySelector('.barcode-display'); const value = partNumberInput.value; if (value) { try { JsBarcode(barcodeElement, value, { format: "CODE128", displayValue: false, margin: 0, height: 30, background: 'transparent' }); barcodeElement.style.display = 'block'; } catch { barcodeElement.style.display = 'none'; } } else { barcodeElement.style.display = 'none'; } }
+        function addPartRow(data = ['', 1, '']) { const row = document.createElement('tr'); row.className = 'border-b last:border-b-0'; let quantityOptions = ''; for (let i = 1; i <= 50; i++) { quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`; } const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`; row.innerHTML = `<td class="pr-2 py-1 align-middle"><div class="flex items-center"><input type="text" class="value-input part-number py-1" value="${data[0]}"><button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button></div></td><td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td><td class="pr-2 py-1 align-middle">${quantitySelect}</td><td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td><td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>`; document.getElementById('parts-list-body').appendChild(row); if (data[0]) { updateBarcode(row.querySelector('.part-number')); } }
+        const addLogRow = (data = ['', '', '', '', '', '']) => { const row = document.createElement('tr'); row.className = 'border-b last:border-b-0'; const dateValue = data[0]; row.innerHTML = `<td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${dateValue}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td><td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td><td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`; document.getElementById('tech-log-body').appendChild(row); };
         document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
-        workCompletedSelect.addEventListener('change', updateWatermark);
-        additionalPartsSelect.addEventListener('change', handlePartsPageVisibility);
+        document.getElementById('workCompleted').addEventListener('change', updateWatermark);
+        document.getElementById('additionalParts').addEventListener('change', handlePartsPageVisibility);
         document.getElementById('add-part-btn').addEventListener('click', () => addPartRow());
-
-        partsListBody.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('.remove-part-btn');
-            if (removeBtn) removeBtn.closest('tr').remove();
-            
-            const scanButton = e.target.closest('.scan-part-btn');
-            if (scanButton) {
-                startScanner(scanButton.closest('td').querySelector('.part-number'));
-            }
-        });
-
-        partsListBody.addEventListener('input', (e) => {
-            if (e.target.matches('.part-number')) updateBarcode(e.target);
-        });
-        
-        // --- Signature Modal & Canvas Resizing ---
+        document.getElementById('parts-list-body').addEventListener('click', (e) => { const removeBtn = e.target.closest('.remove-part-btn'); if (removeBtn) removeBtn.closest('tr').remove(); const scanButton = e.target.closest('.scan-part-btn'); if (scanButton) { startScanner(scanButton.closest('td').querySelector('.part-number')); } });
+        document.getElementById('parts-list-body').addEventListener('input', (e) => { if (e.target.matches('.part-number')) updateBarcode(e.target); });
         let currentEditingPad = null;
-        function resizeCanvas(canvas, pad) {
-            if (!canvas) return;
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width * ratio;
-            canvas.height = rect.height * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            pad.fromData(pad.toData());
-        }
-        
-        document.querySelectorAll('.expand-signature-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const target = event.target.dataset.targetPad;
-                currentEditingPad = (target === 'owner') ? {pad: ownerSignaturePad} : {pad: agcSignaturePad};
-                document.getElementById('signature-modal').classList.remove('hidden');
-                resizeCanvas(document.getElementById('modal-signature-canvas'), modalSignaturePad);
-                if (!currentEditingPad.pad.isEmpty()) {
-                    modalSignaturePad.fromDataURL(currentEditingPad.pad.toDataURL());
-                } else {
-                    modalSignaturePad.clear();
-                }
-            });
-        });
-
-        document.getElementById('modal-save-button').addEventListener('click', () => {
-            if (currentEditingPad) {
-                if (!modalSignaturePad.isEmpty()) {
-                    currentEditingPad.pad.fromDataURL(modalSignaturePad.toDataURL());
-                } else {
-                    currentEditingPad.pad.clear();
-                }
-            }
-            document.getElementById('signature-modal').classList.add('hidden');
-        });
+        function resizeCanvas(canvas, pad) { if (!canvas) return; const ratio = Math.max(window.devicePixelRatio || 1, 1); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width * ratio; canvas.height = rect.height * ratio; canvas.getContext("2d").scale(ratio, ratio); pad.fromData(pad.toData()); }
+        document.querySelectorAll('.expand-signature-button').forEach(button => { button.addEventListener('click', (event) => { const target = event.target.dataset.targetPad; currentEditingPad = (target === 'owner') ? {pad: ownerSignaturePad} : {pad: agcSignaturePad}; document.getElementById('signature-modal').classList.remove('hidden'); resizeCanvas(document.getElementById('modal-signature-canvas'), modalSignaturePad); if (!currentEditingPad.pad.isEmpty()) { modalSignaturePad.fromDataURL(currentEditingPad.pad.toDataURL()); } else { modalSignaturePad.clear(); } }); });
+        document.getElementById('modal-save-button').addEventListener('click', () => { if (currentEditingPad) { if (!modalSignaturePad.isEmpty()) { currentEditingPad.pad.fromDataURL(modalSignaturePad.toDataURL()); } else { currentEditingPad.pad.clear(); } } document.getElementById('signature-modal').classList.add('hidden'); });
         document.getElementById('modal-cancel-button').addEventListener('click', () => document.getElementById('signature-modal').classList.add('hidden'));
         document.getElementById('modal-clear-button').addEventListener('click', () => modalSignaturePad.clear());
-        window.addEventListener("resize", () => {
-            resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
-            resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
-        });
-
-        // --- Data Loading & Initialization ---
-        resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad);
-        resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
-        
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const encodedUrlData = urlParams.get('data');
-            const editMode = urlParams.get('edit') === 'true';
-            
-            // *** CHANGED: Load from sessionStorage if available, otherwise from URL ***
-            const sessionData = sessionStorage.getItem('jobDataForEdit');
-            let jobData = {};
-
-            if (editMode && sessionData) {
-                jobData = JSON.parse(sessionData);
-                sessionStorage.removeItem('jobDataForEdit'); // Clean up after use
-            } else if (encodedUrlData) {
-                jobData = JSON.parse(atob(encodedUrlData));
-            }
-            
-            document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || '';
-            document.getElementById('clientName').value = jobData.clientName || '';
-            document.getElementById('contactName').value = jobData.contactName || '';
-            document.getElementById('phone').value = jobData.phone || '';
-            document.getElementById('portOfCallDisplay').value = jobData.portOfCall || '';
-            document.getElementById('work-description').value = jobData.workDescription || '';
-            document.getElementById('workDone').value = jobData.workDone || '';
-            document.getElementById('techComments').value = jobData.techComments || '';
-            document.getElementById('workCompleted').value = jobData.workCompleted || 'No';
-            document.getElementById('additionalParts').value = jobData.additionalParts || 'No';
-            document.getElementById('nextPort').value = jobData.nextPort || '';
-            document.getElementById('agcName').value = jobData.agcName || '';
-            document.getElementById('agcPosition').value = jobData.agcPosition || 'Service Technician';
-            document.getElementById('ownerName').value = jobData.ownerName || '';
-            document.getElementById('ownerPosition').value = jobData.ownerPosition || 'Captain';
-            document.getElementById('ownerDate').value = jobData.ownerDate || '';
-
-            if (jobData.agcSignature) {
-                agcSignaturePad.fromDataURL(jobData.agcSignature);
-            }
-            if (jobData.ownerSignature) {
-                ownerSignaturePad.fromDataURL(jobData.ownerSignature);
-            }
-
-            if (jobData.addedImages && Array.isArray(jobData.addedImages)) {
-                jobData.addedImages.forEach(imgData => createImageOnPage(imgData));
-            }
-
-            handlePartsPageVisibility();
-            if (jobData.additionalParts === 'Yes' && jobData.partsList?.length > 0) {
-                partsListBody.innerHTML = '';
-                jobData.partsList.forEach(part => addPartRow(part));
-            }
-
-            techLogBody.innerHTML = '';
-            const logs = jobData.techLog || [];
-            for (let i = 0; i < 3; i++) {
-                addLogRow(logs[i]);
-            }
-            document.getElementById('partsPageJobOrder').textContent = `Job Order: ${jobData.jobOrderNumber || 'N/A'}`;
-
-        } catch (error) {
-            console.error("Could not parse job data:", error);
-            for (let i = 0; i < 3; i++) {
-                addLogRow();
-            }
-        }
-
+        window.addEventListener("resize", () => { resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad); resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad); });
+        resizeCanvas(document.getElementById('owner-signature-pad'), ownerSignaturePad); resizeCanvas(document.getElementById('agc-signature-pad'), agcSignaturePad);
+        try { const urlParams = new URLSearchParams(window.location.search); const encodedUrlData = urlParams.get('data'); const editMode = urlParams.get('edit') === 'true'; const sessionData = sessionStorage.getItem('jobDataForEdit'); let jobData = {}; if (editMode && sessionData) { jobData = JSON.parse(sessionData); sessionStorage.removeItem('jobDataForEdit'); } else if (encodedUrlData) { jobData = JSON.parse(atob(encodedUrlData)); } document.getElementById('jobOrderNumber').value = jobData.jobOrderNumber || ''; document.getElementById('clientName').value = jobData.clientName || ''; document.getElementById('contactName').value = jobData.contactName || ''; document.getElementById('phone').value = jobData.phone || ''; document.getElementById('portOfCallDisplay').value = jobData.portOfCall || ''; document.getElementById('work-description').value = jobData.workDescription || ''; document.getElementById('workDone').value = jobData.workDone || ''; document.getElementById('techComments').value = jobData.techComments || ''; document.getElementById('workCompleted').value = jobData.workCompleted || 'No'; document.getElementById('additionalParts').value = jobData.additionalParts || 'No'; document.getElementById('nextPort').value = jobData.nextPort || ''; document.getElementById('agcName').value = jobData.agcName || ''; document.getElementById('agcPosition').value = jobData.agcPosition || 'Service Technician'; document.getElementById('ownerName').value = jobData.ownerName || ''; document.getElementById('ownerPosition').value = jobData.ownerPosition || 'Captain'; document.getElementById('ownerDate').value = jobData.ownerDate || ''; if (jobData.agcSignature) agcSignaturePad.fromDataURL(jobData.agcSignature); if (jobData.ownerSignature) ownerSignaturePad.fromDataURL(jobData.ownerSignature); if (jobData.addedImages && Array.isArray(jobData.addedImages)) jobData.addedImages.forEach(imgData => createImageOnPage(imgData)); if (jobData.addedTextboxes && Array.isArray(jobData.addedTextboxes)) jobData.addedTextboxes.forEach(textData => createTextboxOnPage(textData)); handlePartsPageVisibility(); if (jobData.additionalParts === 'Yes' && jobData.partsList?.length > 0) { document.getElementById('parts-list-body').innerHTML = ''; jobData.partsList.forEach(part => addPartRow(part)); } document.getElementById('tech-log-body').innerHTML = ''; const logs = jobData.techLog || []; for (let i = 0; i < 3; i++) { addLogRow(logs[i]); } document.getElementById('partsPageJobOrder').textContent = `Job Order: ${jobData.jobOrderNumber || 'N/A'}`; } catch (error) { console.error("Could not parse job data:", error); for (let i = 0; i < 3; i++) { addLogRow(); } }
         updateWatermark();
-
-        ['workDone', 'techComments'].forEach(id => {
-            const textarea = document.getElementById(id);
-            const counter = document.getElementById(id + 'Counter');
-            const maxLength = textarea.maxLength;
-            const updateCounter = () => counter.textContent = `${textarea.value.length} / ${maxLength}`;
-            textarea.addEventListener('input', updateCounter);
-            updateCounter();
-        });
-        
+        ['workDone', 'techComments'].forEach(id => { const textarea = document.getElementById(id); const counter = document.getElementById(id + 'Counter'); const maxLength = textarea.maxLength; const updateCounter = () => counter.textContent = `${textarea.value.length} / ${maxLength}`; textarea.addEventListener('input', updateCounter); updateCounter(); });
         document.getElementById('clear-owner-signature').addEventListener('click', () => ownerSignaturePad.clear());
         document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
-
-        document.getElementById('edit-button').addEventListener('click', () => {
-            // *** CHANGED: Save to sessionStorage instead of URL ***
-            sessionStorage.setItem('jobDataForEdit', JSON.stringify(formDataForEdit));
-            window.location.href = window.location.pathname + '?edit=true';
-        });
-
-        document.getElementById('print-button').addEventListener('click', () => {
-            window.print();
-        });
-
-        document.getElementById('submit-button').addEventListener('click', () => {
-             if (!document.getElementById('worksheet-form').checkValidity()) {
-                 document.getElementById('worksheet-form').reportValidity();
-                 return;
-             }
-             
-             document.getElementById('owner-signature-error').classList.add('hidden');
-
-            formDataForEdit = {
-                jobOrderNumber: document.getElementById('jobOrderNumber').value,
-                clientName: document.getElementById('clientName').value,
-                contactName: document.getElementById('contactName').value,
-                phone: document.getElementById('phone').value,
-                portOfCall: document.getElementById('portOfCallDisplay').value,
-                workDescription: document.getElementById('work-description').value,
-                workDone: document.getElementById('workDone').value,
-                techComments: document.getElementById('techComments').value,
-                workCompleted: document.getElementById('workCompleted').value,
-                additionalParts: document.getElementById('additionalParts').value,
-                nextPort: document.getElementById('nextPort').value,
-                agcName: document.getElementById('agcName').value,
-                agcPosition: document.getElementById('agcPosition').value,
-                ownerName: document.getElementById('ownerName').value,
-                ownerPosition: document.getElementById('ownerPosition').value,
-                ownerDate: document.getElementById('ownerDate').value,
-                agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(),
-                ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(),
-                techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [
-                    row.querySelector('.log-date').value, row.querySelector('.log-name').value,
-                    row.querySelector('.log-start').value, row.querySelector('.log-finish').value,
-                    row.querySelector('.log-break').value, row.querySelector('.log-notes').value
-                ]),
-                partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [
-                    row.querySelector('.part-number').value, row.querySelector('.part-quantity').value,
-                    row.querySelector('.part-comments').value
-                ]),
-                addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({
-                    src: el.querySelector('img').src,
-                    top: el.style.top,
-                    left: el.style.left,
-                    width: el.style.width,
-                    height: el.style.height,
-                    isLocked: el.classList.contains('is-locked')
-                }))
-            };
-
-            document.getElementById('agc-stamp').classList.remove('hidden');
-
-            const jobOrderNumber = document.getElementById('jobOrderNumber').value;
-            if (jobOrderNumber) {
-                document.title = `Job Sheet - ${jobOrderNumber}`;
-            }
-
-            document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove());
-
-            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => {
-                let value = el.value;
-                if (el.tagName === 'SELECT') {
-                    value = el.options[el.selectedIndex].text;
-                }
-                const textElement = document.createElement('div');
-                textElement.className = 'final-text';
-
-                if (el.id === 'workDone') textElement.classList.add('work-done-final-view');
-                if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view');
-
-                textElement.textContent = value || ' ';
-                el.parentNode.replaceChild(textElement, el);
-            });
-
-            document.querySelectorAll('.image-wrapper').forEach(el => {
-                el.classList.add('is-finalized');
-                el.querySelector('.resize-handle')?.remove();
-                el.querySelector('.delete-btn')?.remove();
-                el.querySelector('.lock-btn')?.remove();
-            });
-
-            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
-            
-            document.getElementById('submit-button').classList.add('hidden');
-            document.getElementById('add-image-button').classList.add('hidden');
-
-            const controlsDiv = document.getElementById('controls');
-            controlsDiv.classList.remove('pt-4', 'space-y-2');
-            controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4');
-            
-            const printButton = document.getElementById('print-button');
-            const editButton = document.getElementById('edit-button');
-
-            printButton.classList.remove('hidden');
-            editButton.classList.remove('hidden');
-
-            setTimeout(() => window.print(), 100);
-        });
+        document.getElementById('edit-button').addEventListener('click', () => { sessionStorage.setItem('jobDataForEdit', JSON.stringify(formDataForEdit)); window.location.href = window.location.pathname + '?edit=true'; });
+        document.getElementById('print-button').addEventListener('click', () => { window.print(); });
+        document.getElementById('submit-button').addEventListener('click', () => { if (!document.getElementById('worksheet-form').checkValidity()) { document.getElementById('worksheet-form').reportValidity(); return; } document.getElementById('owner-signature-error').classList.add('hidden'); formDataForEdit = { jobOrderNumber: document.getElementById('jobOrderNumber').value, clientName: document.getElementById('clientName').value, contactName: document.getElementById('contactName').value, phone: document.getElementById('phone').value, portOfCall: document.getElementById('portOfCallDisplay').value, workDescription: document.getElementById('work-description').value, workDone: document.getElementById('workDone').value, techComments: document.getElementById('techComments').value, workCompleted: document.getElementById('workCompleted').value, additionalParts: document.getElementById('additionalParts').value, nextPort: document.getElementById('nextPort').value, agcName: document.getElementById('agcName').value, agcPosition: document.getElementById('agcPosition').value, ownerName: document.getElementById('ownerName').value, ownerPosition: document.getElementById('ownerPosition').value, ownerDate: document.getElementById('ownerDate').value, agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(), ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(), techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [row.querySelector('.log-date').value, row.querySelector('.log-name').value, row.querySelector('.log-start').value, row.querySelector('.log-finish').value, row.querySelector('.log-break').value, row.querySelector('.log-notes').value]), partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [row.querySelector('.part-number').value, row.querySelector('.part-quantity').value, row.querySelector('.part-comments').value]), addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({ src: el.querySelector('img').src, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })), addedTextboxes: Array.from(document.querySelectorAll('.text-wrapper')).map(el => ({ content: el.querySelector('.editable-text').innerHTML, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })) }; document.getElementById('agc-stamp').classList.remove('hidden'); const jobOrderNumber = document.getElementById('jobOrderNumber').value; if (jobOrderNumber) { document.title = `Job Sheet - ${jobOrderNumber}`; } document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove()); document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => { let value = el.value; if (el.tagName === 'SELECT') { value = el.options[el.selectedIndex].text; } const textElement = document.createElement('div'); textElement.className = 'final-text'; if (el.id === 'workDone') textElement.classList.add('work-done-final-view'); if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view'); textElement.textContent = value || ' '; el.parentNode.replaceChild(textElement, el); }); document.querySelectorAll('.movable-wrapper').forEach(el => { el.classList.add('is-finalized'); el.querySelector('.resize-handle')?.remove(); el.querySelector('.delete-btn')?.remove(); el.querySelector('.lock-btn')?.remove(); const editable = el.querySelector('[contenteditable]'); if(editable) editable.setAttribute('contenteditable', 'false'); }); document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized')); document.getElementById('add-image-button').parentElement.classList.add('hidden'); document.getElementById('submit-button').classList.add('hidden'); const controlsDiv = document.getElementById('controls'); controlsDiv.classList.remove('pt-4', 'space-y-2'); controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4'); const printButton = document.getElementById('print-button'); const editButton = document.getElementById('edit-button'); printButton.classList.remove('hidden'); editButton.classList.remove('hidden'); setTimeout(() => window.print(), 100); });
     });
     </script>
 </body>
