@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parts List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e5e7eb;
+        }
+        .page {
+            background: white;
+            display: flex;
+            flex-direction: column;
+            margin: 1rem auto;
+            box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
+            width: 210mm;
+            padding: 1cm;
+            min-height: 297mm;
+        }
+        .label-text {
+            font-size: 0.8rem;
+            color: #4a5568;
+            font-weight: 700;
+        }
+        .value-input {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.9rem;
+            background-color: transparent;
+        }
+        .barcode-display {
+            max-width: 100%;
+            height: auto;
+        }
+        @media print {
+            body { background-color: white; }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            html, body {
+                width: 210mm;
+                height: 297mm;
+            }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                padding: 1cm;
+            }
+            #controls, .scan-part-btn, .remove-part-btn { 
+                display: none !important; 
+            }
+            .value-input {
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        <header class="flex justify-between items-center border-b-2 pb-2 mb-4">
+            <div>
+                <h1 class="text-2xl font-bold">Additional Parts List</h1>
+                <p id="client-name-display" class="text-md text-gray-600"></p>
+            </div>
+            <div class="text-right">
+                <div class="label-text">Job Order Number</div>
+                <div id="job-order-display" class="text-lg font-semibold"></div>
+            </div>
+        </header>
+
+        <main class="flex-grow">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b">
+                        <th class="w-4/12 pb-2 pr-2 label-text">Part Number</th>
+                        <th class="w-3/12 pb-2 pr-2 label-text">Barcode</th>
+                        <th class="w-1/12 pb-2 pr-2 label-text">Qty.</th>
+                        <th class="w-4/12 pb-2 pr-2 label-text">Comments</th>
+                        <th class="w-1/12 pb-2"></th>
+                    </tr>
+                </thead>
+                <tbody id="parts-list-body">
+                </tbody>
+            </table>
+        </main>
+
+        <footer id="controls" class="pt-4 mt-auto border-t">
+            <div class="flex justify-end gap-4">
+                 <button type="button" id="add-part-btn" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add Part</button>
+                 <button type="button" id="print-button" class="text-sm bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded">Print / Save as PDF</button>
+            </div>
+        </footer>
+    </div>
+    
+    <div id="scanner-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-medium">Scan Barcode</h3>
+                <button type="button" id="scanner-close-button" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-4">
+                <div id="scanner-container" class="w-full h-auto border bg-black rounded"></div>
+                <div id="scanner-error" class="text-red-500 text-sm mt-2 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const partsListBody = document.getElementById('parts-list-body');
+            const html5QrCode = new Html5Qrcode("scanner-container");
+            const scannerModal = document.getElementById('scanner-modal');
+            const scannerError = document.getElementById('scanner-error');
+            let currentScanTargetInput = null;
+
+            // --- URL Data ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobOrderNumber = urlParams.get('jobOrderNumber') || 'N/A';
+            const clientName = urlParams.get('clientName') || '';
+            document.getElementById('job-order-display').textContent = jobOrderNumber;
+            document.getElementById('client-name-display').textContent = clientName;
+            document.title = `Parts List - ${jobOrderNumber}`;
+
+            // --- Scanner Functions ---
+            const qrCodeSuccessCallback = (decodedText) => {
+                if (currentScanTargetInput) {
+                    currentScanTargetInput.value = decodedText;
+                    currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                stopScanner();
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            function startScanner(targetInput) {
+                currentScanTargetInput = targetInput;
+                scannerModal.classList.remove('hidden');
+                scannerError.classList.add('hidden');
+                html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                    .catch(() => {
+                        scannerError.textContent = "Unable to start camera. Please grant permission.";
+                        scannerError.classList.remove('hidden');
+                    });
+            }
+            function stopScanner() {
+                html5QrCode.stop().catch(() => {}).finally(() => scannerModal.classList.add('hidden'));
+            }
+
+            // --- Table and UI Functions ---
+            function updateBarcode(partNumberInput) {
+                const row = partNumberInput.closest('tr');
+                if (!row) return;
+                const barcodeElement = row.querySelector('.barcode-display');
+                const value = partNumberInput.value;
+
+                if (value) {
+                    try {
+                        JsBarcode(barcodeElement, value, {
+                            format: "CODE128", displayValue: false, margin: 0, height: 40, background: 'transparent'
+                        });
+                        barcodeElement.style.display = 'block';
+                    } catch {
+                        barcodeElement.style.display = 'none';
+                    }
+                } else {
+                     barcodeElement.style.display = 'none';
+                }
+            }
+
+            function addPartRow() {
+                const row = document.createElement('tr');
+                row.className = 'border-b last:border-b-0';
+                
+                let quantityOptions = '';
+                for (let i = 1; i <= 50; i++) {
+                    quantityOptions += `<option value="${i}">${i}</option>`;
+                }
+
+                row.innerHTML = `
+                    <td class="pr-2 py-2 align-middle">
+                        <div class="flex items-center">
+                            <input type="text" class="value-input part-number py-1.5" value="">
+                            <button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="pr-2 py-2 align-middle"><svg class="barcode-display"></svg></td>
+                    <td class="pr-2 py-2 align-middle"><select class="value-input part-quantity py-1.5">${quantityOptions}</select></td>
+                    <td class="pr-2 py-2 align-middle"><input type="text" class="value-input part-comments py-1.5" value=""></td>
+                    <td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>
+                `;
+                partsListBody.appendChild(row);
+            }
+            
+            // --- Event Listeners ---
+            document.getElementById('add-part-btn').addEventListener('click', addPartRow);
+            document.getElementById('print-button').addEventListener('click', () => window.print());
+            document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
+
+            partsListBody.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.remove-part-btn');
+                if (removeBtn) removeBtn.closest('tr').remove();
+                
+                const scanButton = e.target.closest('.scan-part-btn');
+                if (scanButton) {
+                    startScanner(scanButton.closest('td').querySelector('.part-number'));
+                }
+            });
+
+            partsListBody.addEventListener('input', (e) => {
+                if (e.target.matches('.part-number')) updateBarcode(e.target);
+            });
+
+            // --- Initial State ---
+            for (let i = 0; i < 15; i++) {
+                addPartRow();
+            }
+        });
+    </script>
+</body>
+</html>
