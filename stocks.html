@@ -163,7 +163,13 @@
                     <footer><p style="font-size:8pt; margin-bottom: 5px;">Scan QR to process returns</p><div id="qrcode-container" class="qrcode-container"></div></footer>
                 </div>`;
             
-            new QRCode(document.getElementById("qrcode-container"), { text: returnUrl.href, width: 90, height: 90, correctLevel : QRCode.CorrectLevel.L });
+            // The only change is here: width and height are now 120
+            new QRCode(document.getElementById("qrcode-container"), { 
+                text: returnUrl.href, 
+                width: 120, 
+                height: 120, 
+                correctLevel : QRCode.CorrectLevel.L 
+            });
             setTimeout(() => window.print(), 250);
         });
     });
