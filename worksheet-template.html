@@ -159,7 +159,6 @@
             cursor: se-resize;
             z-index: 40;
         }
-        /* *** NEW: Drag Handle for Text Boxes *** */
         .drag-handle {
             position: absolute;
             bottom: -12px;
@@ -502,39 +501,66 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Globals & Initializations ---
+        // This script is very long, so only the changed part is shown for clarity.
+        // The full script is included in the copy-paste block above.
+
+        // --- Movable Elements Functions ---
+        
+        const lockIconUnlocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m11.25 3.75H4.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5Zm-1.5-3.75V6.75c0-1.528-.768-2.9-1.98-3.792" /></svg>`;
+        const lockIconLocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>`;
+
+        function setupMovableElementControls(wrapper, editableContentElement = null) {
+            const deleteBtn = wrapper.querySelector('.delete-btn');
+            const lockBtn = wrapper.querySelector('.lock-btn');
+            
+            // *** FIX: Add e.preventDefault() to stop double-firing on mobile ***
+            const handleDelete = (e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                wrapper.remove(); 
+            };
+            const handleLock = (e) => {
+                e.preventDefault(); 
+                e.stopPropagation();
+                const isLocked = wrapper.classList.toggle('is-locked');
+                lockBtn.innerHTML = isLocked ? lockIconLocked : lockIconUnlocked;
+                if(editableContentElement) {
+                    editableContentElement.setAttribute('contenteditable', !isLocked);
+                }
+            };
+            
+            deleteBtn.addEventListener('click', handleDelete);
+            deleteBtn.addEventListener('touchend', handleDelete);
+            lockBtn.addEventListener('click', handleLock);
+            lockBtn.addEventListener('touchend', handleLock);
+        }
+
+        // --- The rest of the javascript is identical to the previous version ---
+        // I am duplicating the full script here so the user has one block to copy.
+    
         let formDataForEdit = {};
         let currentScanTargetInput = null;
         const html5QrCode = new Html5Qrcode("scanner-container");
-        
         const smallPadOptions = { minWidth: 1, maxWidth: 1 };
         const largePadOptions = { minWidth: 5, maxWidth: 5 };
-
         const ownerSignaturePad = new SignaturePad(document.getElementById('owner-signature-pad'), smallPadOptions);
         const agcSignaturePad = new SignaturePad(document.getElementById('agc-signature-pad'), smallPadOptions);
         const modalSignaturePad = new SignaturePad(document.getElementById('modal-signature-canvas'), largePadOptions);
-        
-        // --- Element Selectors ---
         const movableElementsContainer = document.getElementById('movable-elements-container');
 
-        // --- Movable Elements Functions (TOUCH & MOUSE SUPPORT) ---
         function makeDraggableAndResizable(element) {
             let activeInteraction = null;
             const resizeHandle = element.querySelector('.resize-handle');
             const dragHandle = element.querySelector('.drag-handle');
             const getEventCoords = (e) => e.touches ? e.touches[0] : e;
-
             const interactionStart = (e, type) => {
                 if (element.classList.contains('is-locked')) return;
                 activeInteraction = type;
-
                 e.stopPropagation();
-                if (type === 'drag') e.preventDefault(); 
-
+                if (type === 'drag') e.preventDefault();
                 const coords = getEventCoords(e);
                 const initialX = coords.clientX;
                 const initialY = coords.clientY;
-
                 if (type === 'drag') {
                     element.dataset.xOffset = element.offsetLeft - initialX;
                     element.dataset.yOffset = element.offsetTop - initialY;
@@ -544,19 +570,15 @@
                     element.dataset.startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
                     element.dataset.startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
                 }
-                
                 document.addEventListener('mousemove', interactionMove);
                 document.addEventListener('touchmove', interactionMove, { passive: false });
                 document.addEventListener('mouseup', interactionEnd);
                 document.addEventListener('touchend', interactionEnd);
             };
-
             const interactionMove = (e) => {
                 if (!activeInteraction) return;
                 e.preventDefault();
-
                 const coords = getEventCoords(e);
-
                 if (activeInteraction === 'drag') {
                     const xOffset = parseFloat(element.dataset.xOffset);
                     const yOffset = parseFloat(element.dataset.yOffset);
@@ -573,7 +595,6 @@
                     if (newHeight > 30) element.style.height = newHeight + 'px';
                 }
             };
-
             const interactionEnd = () => {
                 activeInteraction = null;
                 document.removeEventListener('mousemove', interactionMove);
@@ -581,67 +602,32 @@
                 document.removeEventListener('mouseup', interactionEnd);
                 document.removeEventListener('touchend', interactionEnd);
             };
-            
-            // *** UPDATED: Use a dedicated drag handle for text, or the whole element for images ***
             const dragTarget = dragHandle || element;
             const dragInitiator = (e) => {
-                // For images (no drag handle), only drag if the click is on the wrapper itself
                 if (dragTarget === element && e.target !== element) {
                     return;
                 }
                 interactionStart(e, 'drag');
             };
-
             dragTarget.addEventListener('mousedown', dragInitiator);
             dragTarget.addEventListener('touchstart', dragInitiator, { passive: false });
-
             if (resizeHandle) {
                 resizeHandle.addEventListener('mousedown', (e) => interactionStart(e, 'resize'));
                 resizeHandle.addEventListener('touchstart', (e) => interactionStart(e, 'resize'), { passive: false });
             }
         }
-        
-        const lockIconUnlocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m11.25 3.75H4.5a1.5 1.5 0 0 0-1.5 1.5v6a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5Zm-1.5-3.75V6.75c0-1.528-.768-2.9-1.98-3.792" /></svg>`;
-        const lockIconLocked = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>`;
-
-        function setupMovableElementControls(wrapper, editableContentElement = null) {
-            const deleteBtn = wrapper.querySelector('.delete-btn');
-            const lockBtn = wrapper.querySelector('.lock-btn');
-            
-            const handleDelete = (e) => { e.stopPropagation(); wrapper.remove(); };
-            const handleLock = (e) => {
-                e.stopPropagation();
-                const isLocked = wrapper.classList.toggle('is-locked');
-                lockBtn.innerHTML = isLocked ? lockIconLocked : lockIconUnlocked;
-                if(editableContentElement) {
-                    editableContentElement.setAttribute('contenteditable', !isLocked);
-                }
-            };
-            
-            deleteBtn.addEventListener('click', handleDelete);
-            deleteBtn.addEventListener('touchend', handleDelete);
-            lockBtn.addEventListener('click', handleLock);
-            lockBtn.addEventListener('touchend', handleLock);
-        }
 
         function createImageOnPage(imageData) {
             const wrapper = document.createElement('div');
             wrapper.className = 'movable-wrapper image-wrapper';
-            wrapper.innerHTML = `
-                <img src="${imageData.src}" alt="Uploaded content">
-                <div class="resize-handle"></div>
-                <div class="control-btn delete-btn" title="Delete">&times;</div>
-                <div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>
-            `;
+            wrapper.innerHTML = `<img src="${imageData.src}" alt="Uploaded content"><div class="resize-handle"></div><div class="control-btn delete-btn" title="Delete">&times;</div><div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>`;
             wrapper.style.top = imageData.top || '20px';
             wrapper.style.left = imageData.left || '20px';
             wrapper.style.width = imageData.width || '200px';
             wrapper.style.height = imageData.height || '150px';
-
             movableElementsContainer.appendChild(wrapper);
             makeDraggableAndResizable(wrapper);
             setupMovableElementControls(wrapper);
-
             if (imageData.isLocked) {
                 wrapper.classList.add('is-locked');
                 wrapper.querySelector('.lock-btn').innerHTML = lockIconLocked;
@@ -651,27 +637,15 @@
         function createTextboxOnPage(textData = {}) {
             const wrapper = document.createElement('div');
             wrapper.className = 'movable-wrapper text-wrapper';
-            wrapper.innerHTML = `
-                <div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div>
-                <div class="resize-handle"></div>
-                <div class="drag-handle" title="Drag">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: rgba(0,0,0,0.3);">
-                        <path fill-rule="evenodd" d="M5.25 3A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25zM9 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 6zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0113.5 6zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 10.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 10.5zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 15zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="control-btn delete-btn" title="Delete">&times;</div>
-                <div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>
-            `;
+            wrapper.innerHTML = `<div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div><div class="resize-handle"></div><div class="drag-handle" title="Drag"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: rgba(0,0,0,0.3);"><path fill-rule="evenodd" d="M5.25 3A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25zM9 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 6zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0113.5 6zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 10.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 10.5zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 15zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0z" clip-rule="evenodd" /></svg></div><div class="control-btn delete-btn" title="Delete">&times;</div><div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>`;
             wrapper.style.top = textData.top || '40px';
             wrapper.style.left = textData.left || '40px';
             wrapper.style.width = textData.width || '150px';
             wrapper.style.height = textData.height || '50px';
-
             const editableTextDiv = wrapper.querySelector('.editable-text');
             movableElementsContainer.appendChild(wrapper);
             makeDraggableAndResizable(wrapper);
             setupMovableElementControls(wrapper, editableTextDiv);
-
             if (textData.isLocked) {
                 wrapper.classList.add('is-locked');
                 wrapper.querySelector('.lock-btn').innerHTML = lockIconLocked;
@@ -681,16 +655,7 @@
 
         document.getElementById('add-image-button').addEventListener('click', () => document.getElementById('image-uploader').click());
         document.getElementById('add-text-button').addEventListener('click', () => createTextboxOnPage());
-        
-        document.getElementById('image-uploader').addEventListener('change', function(event) {
-            if (event.target.files && event.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => createImageOnPage({ src: e.target.result });
-                reader.readAsDataURL(event.target.files[0]);
-                this.value = '';
-            }
-        });
-        
+        document.getElementById('image-uploader').addEventListener('change', function(event) { if (event.target.files && event.target.files[0]) { const reader = new FileReader(); reader.onload = (e) => createImageOnPage({ src: e.target.result }); reader.readAsDataURL(event.target.files[0]); this.value = ''; } });
         const qrCodeSuccessCallback = (decodedText) => { if (currentScanTargetInput) { currentScanTargetInput.value = decodedText; currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true })); } stopScanner(); };
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         function startScanner(targetInput) { const scannerModal = document.getElementById('scanner-modal'); const scannerError = document.getElementById('scanner-error'); currentScanTargetInput = targetInput; scannerModal.classList.remove('hidden'); scannerError.classList.add('hidden'); html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback).catch(() => { scannerError.textContent = "Unable to start camera. Please grant permission."; scannerError.classList.remove('hidden'); }); }
