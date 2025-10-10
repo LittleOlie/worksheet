@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parts Receipt</title>
+    <style>
+        @page {
+            margin: 0.5cm;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #000;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            width: 72mm; /* Standard for 80mm paper with margins */
+        }
+        .receipt-container {
+            width: 100%;
+            padding: 1mm;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        header img {
+            max-width: 60mm;
+            margin-bottom: 5px;
+        }
+        header h1 {
+            font-size: 12pt;
+            margin: 0;
+            padding: 0;
+            font-weight: bold;
+        }
+        .job-info {
+            margin-bottom: 8px;
+        }
+        .job-info div {
+            display: flex;
+            justify-content: space-between;
+        }
+        .job-info .label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .parts-table {
+            width: 100%;
+            border-top: 1px dashed #000;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        .parts-header .row {
+            display: flex;
+            font-weight: bold;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+        .parts-body .part-item {
+            margin-bottom: 8px;
+        }
+        .parts-body .row {
+            display: flex;
+        }
+        .col-qty { width: 15%; }
+        .col-part { width: 85%; }
+
+        .part-item .part-number {
+            font-weight: bold;
+        }
+        .part-item .part-comments {
+            padding-left: 5px;
+            font-style: italic;
+            word-break: break-all;
+        }
+        footer {
+            border-top: 1px dashed #000;
+            padding-top: 8px;
+            margin-top: 8px;
+            text-align: center;
+            font-size: 8pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <header>
+            <img src="logoAGCtransparentback.png" alt="Company Logo">
+            <h1>PARTS USED</h1>
+        </header>
+
+        <section class="job-info">
+            <div>
+                <span class="label">Job Order:</span>
+                <span id="job-order-display"></span>
+            </div>
+             <div>
+                <span class="label">Client:</span>
+                <span id="client-name-display"></span>
+            </div>
+             <div>
+                <span class="label">Date:</span>
+                <span id="date-display"></span>
+            </div>
+        </section>
+
+        <section class="parts-table">
+            <div class="parts-header">
+                <div class="row">
+                    <div class="col-qty">QTY</div>
+                    <div class="col-part">PART / COMMENTS</div>
+                </div>
+            </div>
+            <div id="parts-list-body" class="parts-body">
+                </div>
+        </section>
+
+        <footer>
+            AGC MARINE SOLUTIONS
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const encodedData = urlParams.get('data');
+                const jobData = JSON.parse(atob(encodedData));
+
+                // Populate job info
+                document.getElementById('job-order-display').textContent = jobData.jobOrderNumber || 'N/A';
+                document.getElementById('client-name-display').textContent = jobData.clientName || 'N/A';
+                document.title = `Parts - ${jobData.jobOrderNumber}`;
+
+                const today = new Date();
+                document.getElementById('date-display').textContent = today.toLocaleDateString();
+
+                // Populate parts list
+                const partsListBody = document.getElementById('parts-list-body');
+                partsListBody.innerHTML = ''; // Clear any placeholders
+
+                const parts = jobData.partsList || [];
+                const filteredParts = parts.filter(part => part[0] && part[0].trim() !== ''); // Filter out empty parts
+
+                if (filteredParts.length > 0) {
+                    filteredParts.forEach(partData => {
+                        const partNumber = partData[0];
+                        const quantity = partData[1];
+                        const comments = partData[2];
+
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'part-item';
+                        
+                        let partHtml = `
+                            <div class="row">
+                                <div class="col-qty">${quantity}x</div>
+                                <div class="col-part part-number">${partNumber}</div>
+                            </div>
+                        `;
+
+                        if (comments && comments.trim() !== '') {
+                            partHtml += `
+                                <div class="row">
+                                    <div class="col-qty"></div>
+                                    <div class="col-part part-comments">${comments}</div>
+                                </div>
+                            `;
+                        }
+
+                        itemDiv.innerHTML = partHtml;
+                        partsListBody.appendChild(itemDiv);
+                    });
+                } else {
+                    partsListBody.innerHTML = '<div style="text-align: center;">-- No parts listed --</div>';
+                }
+
+            } catch (error) {
+                console.error("Failed to load or parse job data:", error);
+                document.body.innerHTML = 'Error: Could not load data. The link may be invalid.';
+            } finally {
+                // Automatically trigger the print dialog
+                setTimeout(() => window.print(), 500);
+            }
+        });
+    </script>
+</body>
+</html>
