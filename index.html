@@ -17,7 +17,11 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+    <div class="relative w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+        <button id="about-button" class="absolute top-4 right-4 text-sm font-medium text-blue-600 hover:text-blue-800">
+            About
+        </button>
+
         <div class="text-center">
             <img src="logo.png" alt="Company Logo" class="mx-auto mb-4" style="width: 287px; height: 171px;">
             
@@ -75,6 +79,31 @@
         </div>
     </div>
 
+    <div id="about-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto p-6 md:p-8 space-y-4">
+            <h2 class="text-xl font-bold text-gray-800">About Worksheet Manager</h2>
+            
+            <p class="text-sm text-gray-600">This online worksheet tool was created by <span class="font-semibold">Breneer Jacinto</span>.</p>
+            
+            <div>
+                <h3 class="font-semibold text-gray-700">How to Use</h3>
+                <ol class="list-decimal list-inside mt-2 space-y-2 text-sm text-gray-600">
+                    <li>Fill in the job details on the main page (Job Order Number, Client Name, etc.).</li>
+                    <li>Click the "Generate Worksheet Link" button.</li>
+                    <li>A unique link for the worksheet will be created.</li>
+                    <li>Use the "Copy Link" button and send the link to the technician.</li>
+                    <li>The technician can then open the link on their device to fill out the rest of the worksheet. The initial details you entered will be locked.</li>
+                </ol>
+            </div>
+
+            <div class="text-right pt-4">
+                <button id="close-modal-button" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md shadow-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.getElementById('generate-link-button').addEventListener('click', () => {
             // 1. Collect data from the form
@@ -97,7 +126,6 @@
             worksheetUrl.searchParams.set('data', encodedData);
             const finalURL = worksheetUrl.href;
 
-
             // 4. Display the generated link
             const generatedLinkSection = document.getElementById('generated-link-section');
             const generatedUrlInput = document.getElementById('generated-url');
@@ -117,6 +145,26 @@
             const url = document.getElementById('generated-url').value;
             if (url) {
                 window.open(url, '_blank');
+            }
+        });
+
+        // --- New Script for About Modal ---
+        const aboutButton = document.getElementById('about-button');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const aboutModal = document.getElementById('about-modal');
+
+        aboutButton.addEventListener('click', () => {
+            aboutModal.classList.remove('hidden');
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            aboutModal.classList.add('hidden');
+        });
+
+        // Close modal if user clicks on the background overlay
+        aboutModal.addEventListener('click', (event) => {
+            if (event.target === aboutModal) {
+                aboutModal.classList.add('hidden');
             }
         });
     </script>
