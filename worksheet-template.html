@@ -124,15 +124,13 @@
             user-select: none;
             background-color: rgba(255, 255, 255, 0.8);
         }
-
-        /* *** NEW: Z-index rules for stacking order *** */
         .image-wrapper {
             z-index: 10;
         }
         .text-wrapper {
             z-index: 20;
+            cursor: default; /* Remove move cursor from text box wrapper */
         }
-        
         .movable-wrapper img {
             width: 100%;
             height: 100%;
@@ -159,7 +157,25 @@
             border: 2px solid white;
             border-radius: 50%;
             cursor: se-resize;
+            z-index: 40;
         }
+        /* *** NEW: Drag Handle for Text Boxes *** */
+        .drag-handle {
+            position: absolute;
+            bottom: -12px;
+            left: -12px;
+            width: 24px;
+            height: 24px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
         .movable-wrapper .control-btn {
             position: absolute;
             width: 24px;
@@ -175,7 +191,7 @@
             cursor: pointer;
             border: 2px solid white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            z-index: 30; /* Higher than text and images */
+            z-index: 30;
         }
         .movable-wrapper .delete-btn {
             top: -12px;
@@ -194,6 +210,7 @@
             pointer-events: none; /* Allow clicks to pass through */
         }
         .movable-wrapper.is-locked .resize-handle,
+        .movable-wrapper.is-locked .drag-handle,
         .movable-wrapper.is-locked .delete-btn {
             display: none;
         }
@@ -236,7 +253,7 @@
             .page:last-child {
                 page-break-after: auto;
             }
-            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn, #add-image-button, #add-text-button, .resize-handle, .control-btn { display: none !important; }
+            #controls, .expand-signature-button, #scanner-modal, #signature-modal, .add-part-btn, .scan-part-btn, .remove-part-btn, #add-image-button, #add-text-button, .resize-handle, .drag-handle, .control-btn { display: none !important; }
             .hidden { display: none !important; }
             .form-section {
                 border: 1px solid #d1d5db !important;
@@ -504,6 +521,7 @@
         function makeDraggableAndResizable(element) {
             let activeInteraction = null;
             const resizeHandle = element.querySelector('.resize-handle');
+            const dragHandle = element.querySelector('.drag-handle');
             const getEventCoords = (e) => e.touches ? e.touches[0] : e;
 
             const interactionStart = (e, type) => {
@@ -564,14 +582,18 @@
                 document.removeEventListener('touchend', interactionEnd);
             };
             
+            // *** UPDATED: Use a dedicated drag handle for text, or the whole element for images ***
+            const dragTarget = dragHandle || element;
             const dragInitiator = (e) => {
-                if (e.target === element) {
-                    interactionStart(e, 'drag');
+                // For images (no drag handle), only drag if the click is on the wrapper itself
+                if (dragTarget === element && e.target !== element) {
+                    return;
                 }
+                interactionStart(e, 'drag');
             };
-            
-            element.addEventListener('mousedown', dragInitiator);
-            element.addEventListener('touchstart', dragInitiator, { passive: false });
+
+            dragTarget.addEventListener('mousedown', dragInitiator);
+            dragTarget.addEventListener('touchstart', dragInitiator, { passive: false });
 
             if (resizeHandle) {
                 resizeHandle.addEventListener('mousedown', (e) => interactionStart(e, 'resize'));
@@ -632,6 +654,11 @@
             wrapper.innerHTML = `
                 <div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div>
                 <div class="resize-handle"></div>
+                <div class="drag-handle" title="Drag">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: rgba(0,0,0,0.3);">
+                        <path fill-rule="evenodd" d="M5.25 3A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25zM9 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 6zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0113.5 6zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 10.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 10.5zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 15zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0z" clip-rule="evenodd" />
+                    </svg>
+                </div>
                 <div class="control-btn delete-btn" title="Delete">&times;</div>
                 <div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>
             `;
@@ -664,8 +691,6 @@
             }
         });
         
-        // --- The rest of the script is identical to the previous version ---
-        
         const qrCodeSuccessCallback = (decodedText) => { if (currentScanTargetInput) { currentScanTargetInput.value = decodedText; currentScanTargetInput.dispatchEvent(new Event('input', { bubbles: true })); } stopScanner(); };
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         function startScanner(targetInput) { const scannerModal = document.getElementById('scanner-modal'); const scannerError = document.getElementById('scanner-error'); currentScanTargetInput = targetInput; scannerModal.classList.remove('hidden'); scannerError.classList.add('hidden'); html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback).catch(() => { scannerError.textContent = "Unable to start camera. Please grant permission."; scannerError.classList.remove('hidden'); }); }
@@ -696,7 +721,7 @@
         document.getElementById('clear-agc-signature').addEventListener('click', () => agcSignaturePad.clear());
         document.getElementById('edit-button').addEventListener('click', () => { sessionStorage.setItem('jobDataForEdit', JSON.stringify(formDataForEdit)); window.location.href = window.location.pathname + '?edit=true'; });
         document.getElementById('print-button').addEventListener('click', () => { window.print(); });
-        document.getElementById('submit-button').addEventListener('click', () => { if (!document.getElementById('worksheet-form').checkValidity()) { document.getElementById('worksheet-form').reportValidity(); return; } document.getElementById('owner-signature-error').classList.add('hidden'); formDataForEdit = { jobOrderNumber: document.getElementById('jobOrderNumber').value, clientName: document.getElementById('clientName').value, contactName: document.getElementById('contactName').value, phone: document.getElementById('phone').value, portOfCall: document.getElementById('portOfCallDisplay').value, workDescription: document.getElementById('work-description').value, workDone: document.getElementById('workDone').value, techComments: document.getElementById('techComments').value, workCompleted: document.getElementById('workCompleted').value, additionalParts: document.getElementById('additionalParts').value, nextPort: document.getElementById('nextPort').value, agcName: document.getElementById('agcName').value, agcPosition: document.getElementById('agcPosition').value, ownerName: document.getElementById('ownerName').value, ownerPosition: document.getElementById('ownerPosition').value, ownerDate: document.getElementById('ownerDate').value, agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(), ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(), techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [row.querySelector('.log-date').value, row.querySelector('.log-name').value, row.querySelector('.log-start').value, row.querySelector('.log-finish').value, row.querySelector('.log-break').value, row.querySelector('.log-notes').value]), partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [row.querySelector('.part-number').value, row.querySelector('.part-quantity').value, row.querySelector('.part-comments').value]), addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({ src: el.querySelector('img').src, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })), addedTextboxes: Array.from(document.querySelectorAll('.text-wrapper')).map(el => ({ content: el.querySelector('.editable-text').innerHTML, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })) }; document.getElementById('agc-stamp').classList.remove('hidden'); const jobOrderNumber = document.getElementById('jobOrderNumber').value; if (jobOrderNumber) { document.title = `Job Sheet - ${jobOrderNumber}`; } document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove()); document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => { let value = el.value; if (el.tagName === 'SELECT') { value = el.options[el.selectedIndex].text; } const textElement = document.createElement('div'); textElement.className = 'final-text'; if (el.id === 'workDone') textElement.classList.add('work-done-final-view'); if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view'); textElement.textContent = value || ' '; el.parentNode.replaceChild(textElement, el); }); document.querySelectorAll('.movable-wrapper').forEach(el => { el.classList.add('is-finalized'); el.querySelector('.resize-handle')?.remove(); el.querySelector('.delete-btn')?.remove(); el.querySelector('.lock-btn')?.remove(); const editable = el.querySelector('[contenteditable]'); if(editable) editable.setAttribute('contenteditable', 'false'); }); document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized')); document.getElementById('add-image-button').parentElement.classList.add('hidden'); document.getElementById('submit-button').classList.add('hidden'); const controlsDiv = document.getElementById('controls'); controlsDiv.classList.remove('pt-4', 'space-y-2'); controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4'); const printButton = document.getElementById('print-button'); const editButton = document.getElementById('edit-button'); printButton.classList.remove('hidden'); editButton.classList.remove('hidden'); setTimeout(() => window.print(), 100); });
+        document.getElementById('submit-button').addEventListener('click', () => { if (!document.getElementById('worksheet-form').checkValidity()) { document.getElementById('worksheet-form').reportValidity(); return; } document.getElementById('owner-signature-error').classList.add('hidden'); formDataForEdit = { jobOrderNumber: document.getElementById('jobOrderNumber').value, clientName: document.getElementById('clientName').value, contactName: document.getElementById('contactName').value, phone: document.getElementById('phone').value, portOfCall: document.getElementById('portOfCallDisplay').value, workDescription: document.getElementById('work-description').value, workDone: document.getElementById('workDone').value, techComments: document.getElementById('techComments').value, workCompleted: document.getElementById('workCompleted').value, additionalParts: document.getElementById('additionalParts').value, nextPort: document.getElementById('nextPort').value, agcName: document.getElementById('agcName').value, agcPosition: document.getElementById('agcPosition').value, ownerName: document.getElementById('ownerName').value, ownerPosition: document.getElementById('ownerPosition').value, ownerDate: document.getElementById('ownerDate').value, agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(), ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(), techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [row.querySelector('.log-date').value, row.querySelector('.log-name').value, row.querySelector('.log-start').value, row.querySelector('.log-finish').value, row.querySelector('.log-break').value, row.querySelector('.log-notes').value]), partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [row.querySelector('.part-number').value, row.querySelector('.part-quantity').value, row.querySelector('.part-comments').value]), addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({ src: el.querySelector('img').src, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })), addedTextboxes: Array.from(document.querySelectorAll('.text-wrapper')).map(el => ({ content: el.querySelector('.editable-text').innerHTML, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })) }; document.getElementById('agc-stamp').classList.remove('hidden'); const jobOrderNumber = document.getElementById('jobOrderNumber').value; if (jobOrderNumber) { document.title = `Job Sheet - ${jobOrderNumber}`; } document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove()); document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => { let value = el.value; if (el.tagName === 'SELECT') { value = el.options[el.selectedIndex].text; } const textElement = document.createElement('div'); textElement.className = 'final-text'; if (el.id === 'workDone') textElement.classList.add('work-done-final-view'); if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view'); textElement.textContent = value || ' '; el.parentNode.replaceChild(textElement, el); }); document.querySelectorAll('.movable-wrapper').forEach(el => { el.classList.add('is-finalized'); el.querySelector('.resize-handle')?.remove(); el.querySelector('.drag-handle')?.remove(); el.querySelector('.delete-btn')?.remove(); el.querySelector('.lock-btn')?.remove(); const editable = el.querySelector('[contenteditable]'); if(editable) editable.setAttribute('contenteditable', 'false'); }); document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized')); document.getElementById('add-image-button').parentElement.classList.add('hidden'); document.getElementById('submit-button').classList.add('hidden'); const controlsDiv = document.getElementById('controls'); controlsDiv.classList.remove('pt-4', 'space-y-2'); controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'justify-center', 'gap-4'); const printButton = document.getElementById('print-button'); const editButton = document.getElementById('edit-button'); printButton.classList.remove('hidden'); editButton.classList.remove('hidden'); setTimeout(() => window.print(), 100); });
     });
     </script>
 </body>
