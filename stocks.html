@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Roboto', sans-serif; background-color: #f3f4f6; }
@@ -24,9 +25,11 @@
             .receipt-content .info-section .label { font-weight: bold; margin-right: 5px; }
             .receipt-content .items-table { width: 100%; padding-top: 8px; margin-top: 8px; }
             .receipt-content .items-header .row { display: flex; font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px; }
-            .receipt-content .items-body .item-row { margin-bottom: 5px; }
+            .receipt-content .items-body .item-row { margin-bottom: 8px; }
             .receipt-content .items-body .main-row { display: flex; }
-            .receipt-content .items-body .desc-row { padding-left: 4ch; font-style: italic; color: #333; }
+            .receipt-content .items-body .sub-row { padding-left: 4ch; font-style: italic; color: #333; font-size: 8pt; }
+            /* NEW: Style for the barcode image container */
+            .receipt-content .items-body .barcode-image { display: block; margin-left: 4ch; margin-top: 2px; width: 85%; height: 35px; }
             .receipt-content .col-qty { width: 4ch; text-align: left; }
             .receipt-content .col-part { flex-grow: 1; word-break: break-all; }
             .receipt-content footer { padding-top: 8px; margin-top: 15px; text-align: center; }
@@ -59,6 +62,8 @@
         </div>
     </div>
 
+    <datalist id="parts-datalist"></datalist>
+
     <div id="receipt-preview" class="print-container"></div>
     <div id="scanner-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col">
@@ -75,11 +80,43 @@
         const addItemBtn = document.getElementById('add-item-btn');
         const printBtn = document.getElementById('print-btn');
         const receiptPreview = document.getElementById('receipt-preview');
+        const partsDatalist = document.getElementById('parts-datalist');
 
         const scannerModal = document.getElementById('scanner-modal');
         const scannerError = document.getElementById('scanner-error');
         const html5QrCode = new Html5Qrcode("scanner-container");
         let currentScanTargetInput = null;
+
+        let partsData = [];
+        async function loadPartsData() {
+            try {
+                const response = await fetch('parts.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                let rawData = await response.json();
+                
+                partsData = rawData.slice(1);
+                
+                partsData.forEach(part => {
+                    if (part.B) {
+                        const option = document.createElement('option');
+                        option.value = part.B;
+                        option.textContent = part.C;
+                        partsDatalist.appendChild(option);
+                    }
+                    if (part.I && part.I !== part.B) {
+                        const option = document.createElement('option');
+                        option.value = part.I;
+                        option.textContent = part.C;
+                        partsDatalist.appendChild(option);
+                    }
+                });
+
+            } catch (error) {
+                console.error('Could not load parts data:', error);
+                alert('Warning: Could not load the parts master list. Autocomplete will not be available.');
+            }
+        }
+        loadPartsData();
 
         const qrCodeSuccessCallback = (decodedText) => { if (currentScanTargetInput) { currentScanTargetInput.value = decodedText; } stopScanner(); };
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
@@ -94,7 +131,7 @@
                 <div class="flex items-center gap-2">
                     <input type="number" placeholder="Qty" class="item-qty w-20 px-3 py-2 border border-gray-300 rounded-md text-sm" min="1" value="1">
                     <div class="flex-grow flex items-center border border-gray-300 rounded-md bg-white">
-                        <input type="text" placeholder="Part Number" class="item-part-no w-full px-3 py-2 border-0 rounded-md text-sm focus:ring-0">
+                        <input type="text" placeholder="Part Number or Barcode" class="item-part-no w-full px-3 py-2 border-0 rounded-md text-sm focus:ring-0" list="parts-datalist">
                         <button type="button" class="scan-item-btn p-2 text-gray-500 hover:text-blue-600" title="Scan Part Number">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2H4zm10 5a3 3 0 11-6 0 3 3 0 016 0z" clip-rule="evenodd" /></svg>
                         </button>
@@ -106,6 +143,26 @@
                 </div>`;
             itemsList.appendChild(row);
             row.querySelector('.remove-item-btn').addEventListener('click', () => row.remove());
+
+            const partNoInput = row.querySelector('.item-part-no');
+            const descInput = row.querySelector('.item-desc');
+            
+            partNoInput.addEventListener('input', () => {
+                const inputValue = partNoInput.value.toLowerCase().trim();
+                if (!inputValue) return;
+
+                const selectedPart = partsData.find(p =>
+                    (p.B && p.B.toLowerCase() === inputValue) ||
+                    (p.I && p.I.toLowerCase() === inputValue)
+                );
+                
+                if (selectedPart) {
+                    descInput.value = selectedPart.C;
+                    if (partNoInput.value !== selectedPart.B) {
+                        partNoInput.value = selectedPart.B;
+                    }
+                }
+            });
         }
 
         itemsList.addEventListener('click', (e) => {
@@ -129,7 +186,13 @@
                 const partNo = row.querySelector('.item-part-no').value.trim();
                 const desc = row.querySelector('.item-desc').value.trim();
                 const qty = row.querySelector('.item-qty').value;
-                if (partNo || desc) { items.push({ partNo, desc, qty: qty || '1' }); }
+
+                const partObject = partsData.find(p => p.B && p.B.toLowerCase() === partNo.toLowerCase());
+                const barcode = partObject ? (partObject.I || '') : '';
+
+                if (partNo || desc) { 
+                    items.push({ partNo, desc, qty: qty || '1', barcode: barcode });
+                }
             });
             if (items.length === 0) { alert('Please add at least one item.'); return; }
 
@@ -137,9 +200,16 @@
             const dateString = dateObj.toLocaleDateString('en-PH', { year: 'numeric', month: '2-digit', day: '2-digit' });
             
             let itemsHtml = '';
-            items.forEach(item => {
-                itemsHtml += `<div class="item-row"><div class="main-row"><div class="col-qty">${item.qty}x</div><div class="col-part">${item.partNo}</div></div>`;
-                if(item.desc) { itemsHtml += `<div class="desc-row">${item.desc}</div>`; }
+            items.forEach((item, index) => {
+                itemsHtml += `<div class="item-row">`;
+                itemsHtml += `<div class="main-row"><div class="col-qty">${item.qty}x</div><div class="col-part">${item.partNo}</div></div>`;
+                // --- MODIFIED: Add a placeholder SVG for the barcode image ---
+                if (item.barcode) {
+                    itemsHtml += `<svg class="barcode-image" id="barcode-${index}"></svg>`;
+                }
+                if (item.desc) { 
+                    itemsHtml += `<div class="sub-row">${item.desc}</div>`;
+                }
                 itemsHtml += `</div>`;
             });
 
@@ -163,13 +233,32 @@
                     <footer><p style="font-size:8pt; margin-bottom: 5px;">Scan QR to process returns</p><div id="qrcode-container" class="qrcode-container"></div></footer>
                 </div>`;
             
-            // The only change is here: width and height are now 120
+            // --- NEW: Generate the barcode images after the HTML is in the DOM ---
+            items.forEach((item, index) => {
+                if (item.barcode) {
+                    try {
+                        JsBarcode(`#barcode-${index}`, item.barcode, {
+                            format: "CODE128",
+                            height: 30,
+                            displayValue: true,
+                            fontSize: 10,
+                            margin: 0
+                        });
+                    } catch (e) {
+                        console.error("Failed to generate barcode for:", item.barcode, e);
+                        const el = document.getElementById(`barcode-${index}`);
+                        if(el) el.outerHTML = `<div class="sub-row" style="color:red;">Invalid Barcode</div>`;
+                    }
+                }
+            });
+            
             new QRCode(document.getElementById("qrcode-container"), { 
                 text: returnUrl.href, 
                 width: 120, 
                 height: 120, 
                 correctLevel : QRCode.CorrectLevel.L 
             });
+
             setTimeout(() => window.print(), 250);
         });
     });
