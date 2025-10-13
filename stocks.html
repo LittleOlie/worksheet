@@ -21,6 +21,7 @@
             .receipt-content h1 { font-size: 11pt; margin: 0; padding: 0; font-weight: bold; text-transform: uppercase; }
             .receipt-content h2 { font-size: 10pt; margin: 0; padding: 2px 0; font-weight: normal; border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 4px; text-transform: uppercase; }
             .receipt-content .info-section { margin-top: 8px; margin-bottom: 8px; font-size: 9pt; }
+            /* --- MODIFIED: Removed 'justify-content: space-between;' --- */
             .receipt-content .info-section div { display: flex; }
             .receipt-content .info-section .label { font-weight: bold; margin-right: 5px; }
             .receipt-content .items-table { width: 100%; padding-top: 8px; margin-top: 8px; }
@@ -249,11 +250,10 @@
                 }
             });
             
-            // --- MODIFIED: Increased width and height for a larger QR code ---
             new QRCode(document.getElementById("qrcode-container"), { 
                 text: returnUrl.href, 
-                width: 160, 
-                height: 160, 
+                width: 120, 
+                height: 120, 
                 correctLevel : QRCode.CorrectLevel.L 
             });
 
