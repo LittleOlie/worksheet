@@ -64,7 +64,10 @@
             const encodedData = urlParams.get('data');
             if (!encodedData) throw new Error("No data found in URL. Please scan a valid requisition slip QR code.");
 
-            originalData = JSON.parse(atob(encodedData));
+            // --- THIS IS THE CORRECTED DECODING LOGIC ---
+            const decodedString = decodeURIComponent(atob(encodedData));
+            originalData = JSON.parse(decodedString);
+
             if (originalData.slipType !== "Requisition") throw new Error("Invalid QR code scanned. Please scan a Requisition Slip.");
 
             document.getElementById('boatName-display').textContent = originalData.boatName;
@@ -92,7 +95,7 @@
 
         } catch (e) {
             returnForm.classList.add('hidden');
-            errorDisplay.textContent = e.message;
+            errorDisplay.textContent = "Failed to parse QR code data. The code may be invalid or the page may be cached. Please try a hard refresh (Ctrl+Shift+R). Error: " + e.message;
             errorDisplay.classList.remove('hidden');
         }
 
