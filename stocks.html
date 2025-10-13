@@ -21,7 +21,6 @@
             .receipt-content h1 { font-size: 11pt; margin: 0; padding: 0; font-weight: bold; text-transform: uppercase; }
             .receipt-content h2 { font-size: 10pt; margin: 0; padding: 2px 0; font-weight: normal; border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 4px; text-transform: uppercase; }
             .receipt-content .info-section { margin-top: 8px; margin-bottom: 8px; font-size: 9pt; }
-            /* --- MODIFIED: Removed 'justify-content: space-between;' --- */
             .receipt-content .info-section div { display: flex; }
             .receipt-content .info-section .label { font-weight: bold; margin-right: 5px; }
             .receipt-content .items-table { width: 100%; padding-top: 8px; margin-top: 8px; }
@@ -177,87 +176,96 @@
         addItemBtn.addEventListener('click', createItemRow);
         
         printBtn.addEventListener('click', () => {
-            const boatName = boatNameInput.value.trim();
-            const personName = personNameInput.value.trim();
-            if (!boatName || !personName) { alert('Please enter both Boat Name and Person Name.'); return; }
+            try {
+                const boatName = boatNameInput.value.trim();
+                const personName = personNameInput.value.trim();
+                if (!boatName || !personName) { alert('Please enter both Boat Name and Person Name.'); return; }
 
-            const items = [];
-            itemsList.querySelectorAll('.item-row').forEach(row => {
-                const partNo = row.querySelector('.item-part-no').value.trim();
-                const desc = row.querySelector('.item-desc').value.trim();
-                const qty = row.querySelector('.item-qty').value;
+                const items = [];
+                itemsList.querySelectorAll('.item-row').forEach(row => {
+                    const partNo = row.querySelector('.item-part-no').value.trim();
+                    const desc = row.querySelector('.item-desc').value.trim();
+                    const qty = row.querySelector('.item-qty').value;
 
-                const partObject = partsData.find(p => p.B && p.B.toLowerCase() === partNo.toLowerCase());
-                const barcode = partObject ? (partObject.I || '') : '';
+                    const partObject = partsData.find(p => p.B && p.B.toLowerCase() === partNo.toLowerCase());
+                    const barcode = partObject ? (partObject.I || '') : '';
 
-                if (partNo || desc) { 
-                    items.push({ partNo, desc, qty: qty || '1', barcode: barcode });
-                }
-            });
-            if (items.length === 0) { alert('Please add at least one item.'); return; }
-
-            const dateObj = new Date();
-            const dateString = dateObj.toLocaleDateString('en-PH', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            
-            let itemsHtml = '';
-            items.forEach((item, index) => {
-                itemsHtml += `<div class="item-row">`;
-                itemsHtml += `<div class="main-row"><div class="col-qty">${item.qty}x</div><div class="col-part">${item.partNo}</div></div>`;
-                if (item.barcode) {
-                    itemsHtml += `<svg class="barcode-image" id="barcode-${index}"></svg>`;
-                }
-                if (item.desc) { 
-                    itemsHtml += `<div class="sub-row">${item.desc}</div>`;
-                }
-                itemsHtml += `</div>`;
-            });
-
-            const requisitionData = { slipType: "Requisition", boatName, personName, date: dateObj.toISOString(), items };
-            const encodedData = btoa(JSON.stringify(requisitionData));
-            const returnUrl = new URL('returns.html', window.location.href);
-            returnUrl.searchParams.set('data', encodedData);
-
-            receiptPreview.innerHTML = `
-                <div class="receipt-content">
-                    <header><h1>AGC MARINE SOLUTIONS</h1><h2>Stock Requisition Slip</h2></header>
-                    <section class="info-section">
-                        <div><span class="label">For:</span><span>${boatName}</span></div>
-                        <div><span class="label">By:</span><span>${personName}</span></div>
-                        <div><span class="label">Date:</span><span>${dateString}</span></div>
-                    </section>
-                    <section class="items-table">
-                        <div class="items-header"><div class="row"><div class="col-qty">QTY</div><div class="col-part">PART NO. / DESCRIPTION</div></div></div>
-                        <div class="items-body">${itemsHtml}</div>
-                    </section>
-                    <footer><p style="font-size:8pt; margin-bottom: 5px;">Scan QR to process returns</p><div id="qrcode-container" class="qrcode-container"></div></footer>
-                </div>`;
-            
-            items.forEach((item, index) => {
-                if (item.barcode) {
-                    try {
-                        JsBarcode(`#barcode-${index}`, item.barcode, {
-                            format: "CODE128",
-                            height: 30,
-                            displayValue: true,
-                            fontSize: 10,
-                            margin: 0
-                        });
-                    } catch (e) {
-                        console.error("Failed to generate barcode for:", item.barcode, e);
-                        const el = document.getElementById(`barcode-${index}`);
-                        if(el) el.outerHTML = `<div class="sub-row" style="color:red;">Invalid Barcode</div>`;
+                    if (partNo || desc) { 
+                        items.push({ partNo, desc, qty: qty || '1', barcode: barcode });
                     }
-                }
-            });
-            
-            new QRCode(document.getElementById("qrcode-container"), { 
-                text: returnUrl.href, 
-                width: 120, 
-                height: 120, 
-                correctLevel : QRCode.CorrectLevel.L 
-            });
+                });
+                if (items.length === 0) { alert('Please add at least one item.'); return; }
 
-            setTimeout(() => window.print(), 250);
+                const dateObj = new Date();
+                const dateString = dateObj.toLocaleDateString('en-PH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                
+                let itemsHtml = '';
+                items.forEach((item, index) => {
+                    itemsHtml += `<div class="item-row">`;
+                    itemsHtml += `<div class="main-row"><div class="col-qty">${item.qty}x</div><div class="col-part">${item.partNo}</div></div>`;
+                    if (item.barcode) {
+                        itemsHtml += `<svg class="barcode-image" id="barcode-${index}"></svg>`;
+                    }
+                    if (item.desc) { 
+                        itemsHtml += `<div class="sub-row">${item.desc}</div>`;
+                    }
+                    itemsHtml += `</div>`;
+                });
+
+                const requisitionData = { slipType: "Requisition", boatName, personName, date: dateObj.toISOString(), items };
+                
+                // --- MODIFIED: Properly encode string for btoa ---
+                const jsonString = JSON.stringify(requisitionData);
+                const encodedData = btoa(encodeURIComponent(jsonString));
+                
+                const returnUrl = new URL('returns.html', window.location.href);
+                returnUrl.searchParams.set('data', encodedData);
+
+                receiptPreview.innerHTML = `
+                    <div class="receipt-content">
+                        <header><h1>AGC MARINE SOLUTIONS</h1><h2>Stock Requisition Slip</h2></header>
+                        <section class="info-section">
+                            <div><span class="label">For:</span><span>${boatName}</span></div>
+                            <div><span class="label">By:</span><span>${personName}</span></div>
+                            <div><span class="label">Date:</span><span>${dateString}</span></div>
+                        </section>
+                        <section class="items-table">
+                            <div class="items-header"><div class="row"><div class="col-qty">QTY</div><div class="col-part">PART NO. / DESCRIPTION</div></div></div>
+                            <div class="items-body">${itemsHtml}</div>
+                        </section>
+                        <footer><p style="font-size:8pt; margin-bottom: 5px;">Scan QR to process returns</p><div id="qrcode-container" class="qrcode-container"></div></footer>
+                    </div>`;
+                
+                items.forEach((item, index) => {
+                    if (item.barcode) {
+                        try {
+                            JsBarcode(`#barcode-${index}`, item.barcode, {
+                                format: "CODE128",
+                                height: 30,
+                                displayValue: true,
+                                fontSize: 10,
+                                margin: 0
+                            });
+                        } catch (e) {
+                            console.error("Failed to generate barcode for:", item.barcode, e);
+                            const el = document.getElementById(`barcode-${index}`);
+                            if(el) el.outerHTML = `<div class="sub-row" style="color:red;">Invalid Barcode</div>`;
+                        }
+                    }
+                });
+                
+                new QRCode(document.getElementById("qrcode-container"), { 
+                    text: returnUrl.href, 
+                    width: 160, 
+                    height: 160, 
+                    correctLevel : QRCode.CorrectLevel.L 
+                });
+
+                setTimeout(() => window.print(), 250);
+            } catch (e) {
+                console.error("Error during print generation:", e);
+                alert("An error occurred while generating the receipt. Check the console for details.");
+            }
         });
     });
     </script>
