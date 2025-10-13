@@ -28,7 +28,6 @@
             .receipt-content .items-body .item-row { margin-bottom: 8px; }
             .receipt-content .items-body .main-row { display: flex; }
             .receipt-content .items-body .sub-row { padding-left: 4ch; font-style: italic; color: #333; font-size: 8pt; }
-            /* NEW: Style for the barcode image container */
             .receipt-content .items-body .barcode-image { display: block; margin-left: 4ch; margin-top: 2px; width: 85%; height: 35px; }
             .receipt-content .col-qty { width: 4ch; text-align: left; }
             .receipt-content .col-part { flex-grow: 1; word-break: break-all; }
@@ -147,7 +146,9 @@
             const partNoInput = row.querySelector('.item-part-no');
             const descInput = row.querySelector('.item-desc');
             
-            partNoInput.addEventListener('input', () => {
+            // --- MODIFIED: Changed from 'input' to 'change' ---
+            // This event fires only when you press Enter or click away from the field.
+            partNoInput.addEventListener('change', () => {
                 const inputValue = partNoInput.value.toLowerCase().trim();
                 if (!inputValue) return;
 
@@ -203,7 +204,6 @@
             items.forEach((item, index) => {
                 itemsHtml += `<div class="item-row">`;
                 itemsHtml += `<div class="main-row"><div class="col-qty">${item.qty}x</div><div class="col-part">${item.partNo}</div></div>`;
-                // --- MODIFIED: Add a placeholder SVG for the barcode image ---
                 if (item.barcode) {
                     itemsHtml += `<svg class="barcode-image" id="barcode-${index}"></svg>`;
                 }
@@ -233,7 +233,6 @@
                     <footer><p style="font-size:8pt; margin-bottom: 5px;">Scan QR to process returns</p><div id="qrcode-container" class="qrcode-container"></div></footer>
                 </div>`;
             
-            // --- NEW: Generate the barcode images after the HTML is in the DOM ---
             items.forEach((item, index) => {
                 if (item.barcode) {
                     try {
