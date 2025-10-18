@@ -23,8 +23,8 @@
             width: 210mm;
             padding: 0.8cm;
             min-height: 297mm; /* Fixed A4 height */
-            position: relative; 
-            overflow: hidden; 
+            position: relative;
+            overflow: hidden;
         }
         .page.is-finalized {
             height: 297mm;
@@ -35,7 +35,7 @@
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
             z-index: 0;
-            color: rgba(156, 163, 175, 0.15); 
+            color: rgba(156, 163, 175, 0.15);
             font-size: 5.5rem;
             font-weight: 800;
             text-align: center;
@@ -45,7 +45,7 @@
             transition: color 0.3s ease-in-out;
         }
         .watermark-overlay.finished-watermark {
-            color: rgba(239, 68, 68, 0.15);
+            color: rgba(239, 68, 68, 0.5);
         }
         .label-text {
             font-size: 0.7rem;
@@ -391,6 +391,7 @@
                         <strong>AGC MARINE SOLUTIONS</strong> | Contact: +33492919608&nbsp;&nbsp;support@agcmarine.com
                     </div>
                 </div>
+                
                 <div class="form-section flex flex-col">
                     <div class="label-text font-bold mb-2">For and on behalf of the owner</div>
                      <div class="grid grid-cols-2 gap-1">
@@ -438,7 +439,6 @@
                 
                 <div id="final-controls" class="hidden">
                     <button type="button" id="print-button" class="w-full py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Print / Save Job Sheet PDF</button>
-                    <button type="button" id="print-receipt-button" class="w-full mt-2 py-2 px-4 rounded-md text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300">Print Parts Receipt</button>
                     <button type="button" id="edit-button" class="w-full mt-2 py-2 px-4 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700">Go Back & Edit</button>
                 </div>
 
@@ -461,10 +461,11 @@
             <table class="w-full text-left">
                 <thead>
                     <tr class="border-b">
-                        <th class="w-3/12 pb-1 pr-2 label-text">Part Number</th>
-                        <th class="w-3/12 pb-1 pr-2 label-text">Barcode</th>
+                        <th class="w-2/12 pb-1 pr-2 label-text">Reference</th>
+                        <th class="w-3/12 pb-1 pr-2 label-text">Code</th>
+                        <th class="w-4/12 pb-1 pr-2 label-text">Description</th>
                         <th class="w-1/12 pb-1 pr-2 label-text">Qty.</th>
-                        <th class="w-4/12 pb-1 pr-2 label-text">Comments</th>
+                        <th class="w-2/12 pb-1 pr-2 label-text">Barcode</th>
                         <th class="w-1/12 pb-1"></th>
                     </tr>
                 </thead>
@@ -505,7 +506,15 @@
 
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        let partsData = [];
+        try {
+            const response = await fetch('parts.json');
+            partsData = await response.json();
+        } catch (error) {
+            console.error('Error fetching parts data:', error);
+        }
+
         let formDataForEdit = {};
         let currentScanTargetInput = null;
         const html5QrCode = new Html5Qrcode("scanner-container");
@@ -565,7 +574,7 @@
 
         function createTextboxOnPage(textData = {}) {
             const wrapper = document.createElement('div'); wrapper.className = 'movable-wrapper text-wrapper';
-            wrapper.innerHTML = `<div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div><div class="resize-handle"></div><div class="drag-handle" title="Drag"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: rgba(0,0,0,0.3);"><path fill-rule="evenodd" d="M5.25 3A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25zM9 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 6zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0113.5 6zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 10.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 10.5zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 15zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 011.5 0z" clip-rule="evenodd" /></svg></div><div class="control-btn delete-btn" title="Delete">&times;</div><div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>`;
+            wrapper.innerHTML = `<div class="editable-text" contenteditable="true">${textData.content || 'Edit this text...'}</div><div class="resize-handle"></div><div class="drag-handle" title="Drag"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px; color: rgba(0,0,0,0.3);"><path fill-rule="evenodd" d="M5.25 3A2.25 2.25 0 003 5.25v13.5A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V5.25A2.25 2.25 0 0018.75 3H5.25zM9 6a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 6zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0113.5 6zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 10.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 10.5zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0115 0zm-5.25 4.5a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM9 15a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 019 15zm4.5 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0115 0z" clip-rule="evenodd" /></svg></div><div class="control-btn delete-btn" title="Delete">&times;</div><div class="control-btn lock-btn" title="Lock">${lockIconUnlocked}</div>`;
             wrapper.style.top = textData.top || '40px'; wrapper.style.left = textData.left || '40px'; wrapper.style.width = textData.width || '150px'; wrapper.style.height = textData.height || '50px';
             const editableTextDiv = wrapper.querySelector('.editable-text'); movableElementsContainer.appendChild(wrapper); makeDraggableAndResizable(wrapper); setupMovableElementControls(wrapper, editableTextDiv);
             if (textData.isLocked) { wrapper.classList.add('is-locked'); wrapper.querySelector('.lock-btn').innerHTML = lockIconLocked; editableTextDiv.setAttribute('contenteditable', 'false'); }
@@ -581,14 +590,42 @@
         function updateWatermark() { const workCompletedSelect = document.getElementById('workCompleted'); const watermarkOverlays = document.querySelectorAll('.watermark-overlay'); const watermarkTexts = document.querySelectorAll('.watermark-text'); const isFinished = workCompletedSelect.value === 'Yes'; watermarkTexts.forEach(el => el.textContent = isFinished ? 'AGC MARINE SOLUTIONS' : 'AGC MARINE SOLUTIONS'); watermarkOverlays.forEach(el => el.classList.toggle('finished-watermark', isFinished)); }
         function handlePartsPageVisibility() { const additionalPartsSelect = document.getElementById('additionalParts'); const partsPage = document.getElementById('parts-page'); const partsListBody = document.getElementById('parts-list-body'); const shouldBeVisible = additionalPartsSelect.value === 'Yes'; partsPage.classList.toggle('hidden', !shouldBeVisible); document.getElementById('main-page').classList.toggle('has-parts-page', shouldBeVisible); if (shouldBeVisible && partsListBody.children.length === 0) { addPartRow(); } }
         function updateBarcode(partNumberInput) { const row = partNumberInput.closest('tr'); if (!row) return; const barcodeElement = row.querySelector('.barcode-display'); const value = partNumberInput.value; if (value) { try { JsBarcode(barcodeElement, value, { format: "CODE128", displayValue: false, margin: 0, height: 30, background: 'transparent' }); barcodeElement.style.display = 'block'; } catch { barcodeElement.style.display = 'none'; } } else { barcodeElement.style.display = 'none'; } }
-        function addPartRow(data = ['', 1, '']) { const row = document.createElement('tr'); row.className = 'border-b last:border-b-0'; let quantityOptions = ''; for (let i = 1; i <= 50; i++) { quantityOptions += `<option value="${i}" ${i == data[1] ? 'selected' : ''}>${i}</option>`; } const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`; row.innerHTML = `<td class="pr-2 py-1 align-middle"><div class="flex items-center"><input type="text" class="value-input part-number py-1" value="${data[0]}"><button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button></div></td><td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td><td class="pr-2 py-1 align-middle">${quantitySelect}</td><td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-comments py-1" value="${data[2]}"></td><td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>`; document.getElementById('parts-list-body').appendChild(row); if (data[0]) { updateBarcode(row.querySelector('.part-number')); } }
+        
+        function addPartRow(data = ['', '', '', 1]) { 
+            const row = document.createElement('tr'); 
+            row.className = 'border-b last:border-b-0'; 
+            let quantityOptions = ''; 
+            for (let i = 1; i <= 500; i++) {
+                quantityOptions += `<option value="${i}" ${i == data[3] ? 'selected' : ''}>${i}</option>`; 
+            } 
+            const quantitySelect = `<select class="value-input part-quantity py-1">${quantityOptions}</select>`; 
+            row.innerHTML = `<td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-reference py-1" value="${data[0]}"></td><td class="pr-2 py-1 align-middle"><div class="flex items-center"><input type="text" class="value-input part-number py-1" value="${data[1]}"><button type="button" class="scan-part-btn ml-2 p-1 text-gray-600 hover:text-blue-600" title="Scan Barcode"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button></div></td><td class="pr-2 py-1 align-middle"><input type="text" class="value-input part-description py-1" value="${data[2]}"></td><td class="pr-2 py-1 align-middle">${quantitySelect}</td><td class="pr-2 py-1 align-middle"><svg class="barcode-display"></svg></td><td class="text-center align-middle"><button type="button" class="remove-part-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button></td>`; 
+            document.getElementById('parts-list-body').appendChild(row); 
+            if (data[1]) { updateBarcode(row.querySelector('.part-number')); } 
+        }
+
         const addLogRow = (data = ['', '', '', '', '', '']) => { const row = document.createElement('tr'); row.className = 'border-b last:border-b-0'; const dateValue = data[0]; row.innerHTML = `<td class="pr-2 py-0.5"><input type="date" class="value-input log-date py-0.5" value="${dateValue}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-name py-0.5" value="${data[1]}"></td><td class="pr-2 py-0.5"><input type="time" class="value-input log-start py-0.5" value="${data[2]}"></td><td class="pr-2 py-0.5"><input type="time" class="value-input log-finish py-0.5" value="${data[3]}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-break py-0.5" value="${data[4]}"></td><td class="pr-2 py-0.5"><input type="text" class="value-input log-notes py-0.5" value="${data[5]}" maxlength="50"></td>`; document.getElementById('tech-log-body').appendChild(row); };
         document.getElementById('scanner-close-button').addEventListener('click', stopScanner);
         document.getElementById('workCompleted').addEventListener('change', updateWatermark);
         document.getElementById('additionalParts').addEventListener('change', handlePartsPageVisibility);
         document.getElementById('add-part-btn').addEventListener('click', () => addPartRow());
         document.getElementById('parts-list-body').addEventListener('click', (e) => { const removeBtn = e.target.closest('.remove-part-btn'); if (removeBtn) removeBtn.closest('tr').remove(); const scanButton = e.target.closest('.scan-part-btn'); if (scanButton) { startScanner(scanButton.closest('td').querySelector('.part-number')); } });
-        document.getElementById('parts-list-body').addEventListener('input', (e) => { if (e.target.matches('.part-number')) updateBarcode(e.target); });
+        
+        document.getElementById('parts-list-body').addEventListener('input', (e) => {
+            if (e.target.matches('.part-reference')) {
+                const referenceValue = e.target.value.trim();
+                const row = e.target.closest('tr');
+                const part = partsData.find(p => p.B === referenceValue);
+                if (part) {
+                    row.querySelector('.part-description').value = part.C;
+                } else {
+                    row.querySelector('.part-description').value = '';
+                }
+            } else if (e.target.matches('.part-number')) {
+                updateBarcode(e.target);
+            }
+        });
+
         let currentEditingPad = null;
         function resizeCanvas(canvas, pad) { if (!canvas) return; const ratio = Math.max(window.devicePixelRatio || 1, 1); const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width * ratio; canvas.height = rect.height * ratio; canvas.getContext("2d").scale(ratio, ratio); pad.fromData(pad.toData()); }
         document.querySelectorAll('.expand-signature-button').forEach(button => { button.addEventListener('click', (event) => { const target = event.target.dataset.targetPad; currentEditingPad = (target === 'owner') ? {pad: ownerSignaturePad} : {pad: agcSignaturePad}; document.getElementById('signature-modal').classList.remove('hidden'); resizeCanvas(document.getElementById('modal-signature-canvas'), modalSignaturePad); if (!currentEditingPad.pad.isEmpty()) { modalSignaturePad.fromDataURL(currentEditingPad.pad.toDataURL()); } else { modalSignaturePad.clear(); } }); });
@@ -605,43 +642,110 @@
         document.getElementById('edit-button').addEventListener('click', () => { sessionStorage.setItem('jobDataForEdit', JSON.stringify(formDataForEdit)); window.location.href = window.location.pathname + '?edit=true'; });
         document.getElementById('print-button').addEventListener('click', () => { window.print(); });
 
-        document.getElementById('print-receipt-button').addEventListener('click', () => {
-            if (formDataForEdit.additionalParts !== 'Yes' || !formDataForEdit.partsList || formDataForEdit.partsList.filter(p => p[0]).length === 0) {
-                alert('No additional parts were added to this job sheet.');
-                return;
-            }
-            const receiptData = {
-                jobOrderNumber: formDataForEdit.jobOrderNumber,
-                clientName: formDataForEdit.clientName,
-                partsList: formDataForEdit.partsList,
+        document.getElementById('submit-button').addEventListener('click', () => {
+            if (!document.getElementById('worksheet-form').checkValidity()) { document.getElementById('worksheet-form').reportValidity(); return; }
+            document.getElementById('owner-signature-error').classList.add('hidden');
+            formDataForEdit = { 
+                jobOrderNumber: document.getElementById('jobOrderNumber').value, 
+                clientName: document.getElementById('clientName').value, 
+                contactName: document.getElementById('contactName').value, 
+                phone: document.getElementById('phone').value, 
+                portOfCall: document.getElementById('portOfCallDisplay').value, 
+                workDescription: document.getElementById('work-description').value, 
+                workDone: document.getElementById('workDone').value, 
+                techComments: document.getElementById('techComments').value, 
+                workCompleted: document.getElementById('workCompleted').value, 
+                additionalParts: document.getElementById('additionalParts').value, 
+                nextPort: document.getElementById('nextPort').value, 
+                agcName: document.getElementById('agcName').value, 
+                agcPosition: document.getElementById('agcPosition').value, 
+                ownerName: document.getElementById('ownerName').value, 
+                ownerPosition: document.getElementById('ownerPosition').value, 
+                ownerDate: document.getElementById('ownerDate').value, 
+                agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(), 
+                ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(), 
+                techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [row.querySelector('.log-date').value, row.querySelector('.log-name').value, row.querySelector('.log-start').value, row.querySelector('.log-finish').value, row.querySelector('.log-break').value, row.querySelector('.log-notes').value]), 
+                
+                // *** MODIFIED to filter out empty rows ***
+                partsList: Array.from(document.querySelectorAll('#parts-list-body tr'))
+                    .filter(row => {
+                        const ref = row.querySelector('.part-reference').value.trim();
+                        const code = row.querySelector('.part-number').value.trim();
+                        const desc = row.querySelector('.part-description').value.trim();
+                        return ref !== '' || code !== '' || desc !== ''; // Keep if at least one is NOT empty
+                    })
+                    .map(row => [
+                        row.querySelector('.part-reference').value, 
+                        row.querySelector('.part-number').value, 
+                        row.querySelector('.part-description').value, 
+                        row.querySelector('.part-quantity').value
+                    ]), 
+                
+                addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({ src: el.querySelector('img').src, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })), 
+                addedTextboxes: Array.from(document.querySelectorAll('.text-wrapper')).map(el => ({ content: el.querySelector('.editable-text').innerHTML, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })) 
             };
-            const encodedData = btoa(JSON.stringify(receiptData));
-            const receiptUrl = new URL('parts-receipt.html', window.location.href);
-            receiptUrl.searchParams.set('data', encodedData);
-            window.open(receiptUrl.href, '_blank');
-        });
+            
+            document.getElementById('agc-stamp').classList.remove('hidden');
+            const jobOrderNumber = document.getElementById('jobOrderNumber').value;
+            if (jobOrderNumber) { document.title = `Job Sheet - ${jobOrderNumber}`; }
+            document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove());
+            
+            // Finalize main page elements
+            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => { let value = el.value; if (el.tagName === 'SELECT') { value = el.options[el.selectedIndex].text; } const textElement = document.createElement('div'); textElement.className = 'final-text'; if (el.id === 'workDone') textElement.classList.add('work-done-final-view'); if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view'); textElement.textContent = value || ' '; el.parentNode.replaceChild(textElement, el); });
+            
+            // *** MODIFIED: Finalize parts page elements (with empty row check) ***
+            document.querySelectorAll('#parts-list-body tr').forEach(row => {
+                const refInput = row.querySelector('input.part-reference');
+                const numInput = row.querySelector('input.part-number');
+                const descInput = row.querySelector('input.part-description');
 
-        document.getElementById('submit-button').addEventListener('click', () => { 
-            if (!document.getElementById('worksheet-form').checkValidity()) { document.getElementById('worksheet-form').reportValidity(); return; } 
-            document.getElementById('owner-signature-error').classList.add('hidden'); 
-            formDataForEdit = { jobOrderNumber: document.getElementById('jobOrderNumber').value, clientName: document.getElementById('clientName').value, contactName: document.getElementById('contactName').value, phone: document.getElementById('phone').value, portOfCall: document.getElementById('portOfCallDisplay').value, workDescription: document.getElementById('work-description').value, workDone: document.getElementById('workDone').value, techComments: document.getElementById('techComments').value, workCompleted: document.getElementById('workCompleted').value, additionalParts: document.getElementById('additionalParts').value, nextPort: document.getElementById('nextPort').value, agcName: document.getElementById('agcName').value, agcPosition: document.getElementById('agcPosition').value, ownerName: document.getElementById('ownerName').value, ownerPosition: document.getElementById('ownerPosition').value, ownerDate: document.getElementById('ownerDate').value, agcSignature: agcSignaturePad.isEmpty() ? null : agcSignaturePad.toDataURL(), ownerSignature: ownerSignaturePad.isEmpty() ? null : ownerSignaturePad.toDataURL(), techLog: Array.from(document.querySelectorAll('#tech-log-body tr')).map(row => [row.querySelector('.log-date').value, row.querySelector('.log-name').value, row.querySelector('.log-start').value, row.querySelector('.log-finish').value, row.querySelector('.log-break').value, row.querySelector('.log-notes').value]), partsList: Array.from(document.querySelectorAll('#parts-list-body tr')).map(row => [row.querySelector('.part-number').value, row.querySelector('.part-quantity').value, row.querySelector('.part-comments').value]), addedImages: Array.from(document.querySelectorAll('.image-wrapper')).map(el => ({ src: el.querySelector('img').src, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })), addedTextboxes: Array.from(document.querySelectorAll('.text-wrapper')).map(el => ({ content: el.querySelector('.editable-text').innerHTML, top: el.style.top, left: el.style.left, width: el.style.width, height: el.style.height, isLocked: el.classList.contains('is-locked') })) }; 
-            document.getElementById('agc-stamp').classList.remove('hidden'); 
-            const jobOrderNumber = document.getElementById('jobOrderNumber').value; 
-            if (jobOrderNumber) { document.title = `Job Sheet - ${jobOrderNumber}`; } 
-            document.querySelectorAll('#workDoneCounter, #techCommentsCounter, #clear-agc-signature-container, #clear-owner-signature-container').forEach(el => el.remove()); 
-            document.querySelectorAll('#main-page input, #main-page textarea, #main-page select').forEach(el => { let value = el.value; if (el.tagName === 'SELECT') { value = el.options[el.selectedIndex].text; } const textElement = document.createElement('div'); textElement.className = 'final-text'; if (el.id === 'workDone') textElement.classList.add('work-done-final-view'); if (el.id === 'techComments') textElement.classList.add('tech-comments-final-view'); textElement.textContent = value || ' '; el.parentNode.replaceChild(textElement, el); }); 
-            document.querySelectorAll('.movable-wrapper').forEach(el => { el.classList.add('is-finalized'); el.querySelector('.resize-handle')?.remove(); el.querySelector('.drag-handle')?.remove(); el.querySelector('.delete-btn')?.remove(); el.querySelector('.lock-btn')?.remove(); const editable = el.querySelector('[contenteditable]'); if(editable) editable.setAttribute('contenteditable', 'false'); }); 
-            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized')); 
-            document.getElementById('add-image-button').parentElement.classList.add('hidden'); 
-            document.getElementById('submit-button').classList.add('hidden'); 
-            const controlsDiv = document.getElementById('controls'); 
-            controlsDiv.classList.remove('pt-4', 'space-y-2'); 
-            controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'flex-col', 'items-center'); 
+                // Check based on the INPUTS
+                const ref = refInput ? refInput.value.trim() : '';
+                const code = numInput ? numInput.value.trim() : '';
+                const desc = descInput ? descInput.value.trim() : '';
+
+                // If all key fields are empty, remove the row entirely and skip it
+                if (ref === '' && code === '' && desc === '') {
+                    row.remove();
+                    return; // Stop processing this empty row
+                }
+
+                // Replace inputs with text
+                row.querySelectorAll('input.value-input').forEach(input => {
+                    const textElement = document.createElement('div');
+                    textElement.className = 'final-text py-1'; // match padding
+                    textElement.textContent = input.value || ' ';
+                    input.closest('div.flex') ? input.closest('div.flex').parentNode.replaceChild(textElement, input.closest('div.flex')) : input.parentNode.replaceChild(textElement, input);
+                });
+
+                // Replace quantity select with text
+                const select = row.querySelector('select.part-quantity');
+                if (select) {
+                    const textElement = document.createElement('div');
+                    textElement.className = 'final-text py-1'; // match padding
+                    textElement.textContent = select.options[select.selectedIndex].text || ' ';
+                    select.parentNode.replaceChild(textElement, select);
+                }
+
+                // Remove buttons from finalized view
+                row.querySelector('.scan-part-btn')?.remove();
+                row.querySelector('.remove-part-btn')?.remove();
+            });
+
+            // Hide the "Add Part" button
+            document.getElementById('add-part-btn')?.classList.add('hidden');
+            // *** END OF MODIFIED BLOCK ***
+
+            document.querySelectorAll('.movable-wrapper').forEach(el => { el.classList.add('is-finalized'); el.querySelector('.resize-handle')?.remove(); el.querySelector('.drag-handle')?.remove(); el.querySelector('.delete-btn')?.remove(); el.querySelector('.lock-btn')?.remove(); const editable = el.querySelector('[contenteditable]'); if(editable) editable.setAttribute('contenteditable', 'false'); });
+            document.querySelectorAll('.page').forEach(p => p.classList.add('is-finalized'));
+            document.getElementById('add-image-button').parentElement.classList.add('hidden');
+            document.getElementById('submit-button').classList.add('hidden');
+            const controlsDiv = document.getElementById('controls');
+            controlsDiv.classList.remove('pt-4', 'space-y-2');
+            controlsDiv.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-white', 'p-4', 'shadow-[0_-2px_10px_rgba(0,0,0,0.1)]', 'z-20', 'flex', 'flex-col', 'items-center');
             document.getElementById('final-controls').classList.remove('hidden');
-            if (formDataForEdit.additionalParts !== 'Yes') {
-                document.getElementById('print-receipt-button').classList.add('hidden');
-            }
-            setTimeout(() => window.print(), 100); 
+            
+            setTimeout(() => window.print(), 100);
         });
     });
     </script>
